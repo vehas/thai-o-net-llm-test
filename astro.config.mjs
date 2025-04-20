@@ -9,21 +9,23 @@ export default defineConfig({
     tailwind(),
     // icon()
   ],
-  // output: 'static',
-  // build: {
-  //   inlineStylesheets: 'auto'
-  // },
-  // vite: {
-  //   build: {
-  //     assetsInlineLimit: 4096,
-  //     rollupOptions: {
-  //       output: {
-  //         manualChunks: undefined
-  //       }
-  //     }
-  //   },
-  //   optimizeDeps: {
-  //     exclude: ['duckdb']
-  //   }
-  // }
+  output: 'static',
+  build: {
+    inlineStylesheets: 'auto'
+  },
+  site: 'https://vehas.github.io',
+  base: '/thai-o-net-llm-test',
+  vite: {
+    build: {
+      assetsInlineLimit: 4096,
+      rollupOptions: {
+        output: {
+          manualChunks: undefined
+        }
+      }
+    },
+    optimizeDeps: {
+      exclude: ['duckdb']
+    }
+  }
 });

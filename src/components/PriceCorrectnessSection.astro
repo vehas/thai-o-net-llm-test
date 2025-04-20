@@ -13,123 +13,130 @@ interface PriceScoreInfo {
   model_name: string;
   correct_pct: number; // Renamed from correct_percentage
   total_cost_usd: number; // Renamed from total_cost
+  total_cost_thb: number;
   correct_count: number;
   total_count: number;
   prompt_cost_usd: number; // Renamed from prompt_cost
   completion_cost_usd: number; // Renamed from completion_cost
 }
 
-let db: Database | null = null;
 let priceScores: PriceScoreInfo[] = [];
 let dbError: string | null = null;
 
-const dbPath = path.resolve(path.dirname(__filename), '../../external/snapshot.duckdb');
-let con: duckdb.Connection | null = null; // Need connection for prepare/finalize
+// This code runs at build time for SSG
+if (import.meta.env.SSR) {
+  let db: Database | null = null;
+  let con: duckdb.Connection | null = null; // Need connection for prepare/finalize
+  const dbPath = path.resolve(path.dirname(__filename), '../../external/snapshot.duckdb');
 
-try {
-  db = new duckdb.Database(dbPath, { access_mode: 'READ_ONLY' });
-  con = db.connect(); // Connect to the database
-
-  // Restore the correct query joining tables
-  const query = `
-      SELECT
-        metrics.model_name,
-        metrics.icon,
-        metrics.correct_count,
-        metrics.total_count,
-        metrics.correct_pct,
-        ROUND(metrics.total_prompt_tokens * metrics.input_token_price / 1000.0, 4) AS prompt_cost_usd,
-        ROUND(metrics.total_completion_tokens * metrics.output_token_price / 1000.0, 4) AS completion_cost_usd,
-        ROUND(
-          (metrics.total_prompt_tokens * metrics.input_token_price
-         + metrics.total_completion_tokens * metrics.output_token_price)
-          / 1000.0
-        , 4) AS total_cost_usd
-      FROM (
+  try {
+    db = new duckdb.Database(dbPath, { access_mode: 'READ_ONLY' });
+    con = db.connect(); // Connect to the database
+    let usd_to_baht = 35;
+    // Restore the correct query joining tables
+    const query = `
         SELECT
-          a.model_name,
-          m.icon,
-          m.input_token_price,
-          m.output_token_price,
-          SUM(CASE WHEN a.correct_answer_key = q.answer THEN 1 ELSE 0 END) AS correct_count,
-          COUNT(*) AS total_count,
+          metrics.model_name,
+          metrics.icon,
+          metrics.correct_count,
+          metrics.total_count,
+          metrics.correct_pct,
+          ROUND(metrics.total_prompt_tokens * metrics.input_token_price / 1000000.0, 4) AS prompt_cost_usd,
+          ROUND(metrics.total_completion_tokens * metrics.output_token_price / 1000000.0, 4) AS completion_cost_usd,
           ROUND(
-            100.0
-            * SUM(CASE WHEN a.correct_answer_key = q.answer THEN 1 ELSE 0 END)
-            / COUNT(*)
-          , 2) AS correct_pct,
-          SUM(a.prompt_tokens) AS total_prompt_tokens,
-          SUM(a.completion_tokens) AS total_completion_tokens
-        FROM answer_snapshot a
-        JOIN question q
-          ON a.exam_name   = q.exam_name
-         AND a.subject     = q.subject
-         AND a.test_number = q.subject_index
-        JOIN model_price_icon m
-          ON a.model_name  = m.model_name
-        GROUP BY
-          a.model_name,
-          m.icon,
-          m.input_token_price,
-          m.output_token_price
-      ) metrics
-      ORDER BY
-        metrics.correct_pct DESC;
-  `;
+            (metrics.total_prompt_tokens * metrics.input_token_price
+           + metrics.total_completion_tokens * metrics.output_token_price)
+            / 1000000.0
+          , 4) AS total_cost_usd,
+  		ROUND(total_cost_usd * ${usd_to_baht}, 4) AS total_cost_thb
+        FROM (
+          SELECT
+            a.model_name,
+            m.icon,
+            m.input_token_price,
+            m.output_token_price,
+            SUM(CASE WHEN a.correct_answer_key = q.answer THEN 1 ELSE 0 END) AS correct_count,
+            COUNT(*) AS total_count,
+            ROUND(
+              100.0
+              * SUM(CASE WHEN a.correct_answer_key = q.answer THEN 1 ELSE 0 END)
+              / COUNT(*)
+            , 2) AS correct_pct,
+            SUM(a.prompt_tokens) AS total_prompt_tokens,
+            SUM(a.completion_tokens) AS total_completion_tokens
+          FROM answer_snapshot a
+          JOIN question q
+            ON a.exam_name   = q.exam_name
+           AND a.subject     = q.subject
+           AND a.test_number = q.subject_index
+          JOIN model_price_icon m
+            ON a.model_name  = m.model_name
+          GROUP BY
+            a.model_name,
+            m.icon,
+            m.input_token_price,
+            m.output_token_price
+        ) metrics
+        ORDER BY
+          metrics.correct_pct DESC;
+    `;
 
-  const stmt = con.prepare(query);
+    const stmt = con.prepare(query);
 
-  priceScores = await new Promise<PriceScoreInfo[]>((resolve, reject) => {
-    stmt.all((err, res) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Map BigInts to Numbers if necessary, ensure result matches interface
-        resolve((res as any[]).map(row => ({
-            ...row,
-            correct_count: Number(row.correct_count),
-            total_count: Number(row.total_count),
-            // Ensure numeric types for costs as well, handle potential nulls/undefined
-            total_cost_usd: Number(row.total_cost_usd ?? 0),
-            prompt_cost_usd: Number(row.prompt_cost_usd ?? 0),
-            completion_cost_usd: Number(row.completion_cost_usd ?? 0),
-        })) as PriceScoreInfo[]);
-      }
-    });
-  });
-
-  await stmt.finalize(); // Finalize the statement
-
-} catch (e) {
-  console.error("Database operation error:", e);
-  dbError = (e instanceof Error) ? e.message : String(e);
-  priceScores = [];
-} finally {
-  // Close connection first, then database
-  if (con) {
-    try {
-      await con.close();
-    } catch (closeErr) {
-      console.error("Error closing connection:", closeErr);
-      if (!dbError) dbError = 'Failed to close database connection.';
-    }
-  }
-  if (db) {
-    db.close((err) => {
-      if (err) {
-        console.error("Error closing database:", err);
-        if (!dbError) { 
-          dbError = 'Failed to close database instance cleanly.';
+    priceScores = await new Promise<PriceScoreInfo[]>((resolve, reject) => {
+      stmt.all((err, res) => {
+        if (err) {
+          reject(err);
+        } else {
+          // Map BigInts to Numbers if necessary, ensure result matches interface
+          resolve((res as any[]).map(row => ({
+              ...row,
+              correct_count: Number(row.correct_count),
+              total_count: Number(row.total_count),
+              // Ensure numeric types for costs as well, handle potential nulls/undefined
+              total_cost_usd: Number(row.total_cost_usd ?? 0),
+              total_cost_thb: Number(row.total_cost_thb ?? 0),
+              prompt_cost_usd: Number(row.prompt_cost_usd ?? 0),
+              completion_cost_usd: Number(row.completion_cost_usd ?? 0),
+          })) as PriceScoreInfo[]);
         }
-      }
+      });
     });
+
+    await stmt.finalize(); // Finalize the statement
+
+  } catch (e) {
+    console.error("Database operation error:", e);
+    dbError = (e instanceof Error) ? e.message : String(e);
+    priceScores = [];
+  } finally {
+    // Close connection first, then database
+    if (con) {
+      try {
+        await con.close();
+      } catch (closeErr) {
+        console.error("Error closing connection:", closeErr);
+        if (!dbError) dbError = 'Failed to close database connection.';
+      }
+    }
+    if (db) {
+      db.close((err) => {
+        if (err) {
+          console.error("Error closing database:", err);
+          if (!dbError) { 
+            dbError = 'Failed to close database instance cleanly.';
+          }
+        }
+      });
+    }
   }
 }
 
 ---
 
 <section id="price-correctness">
-  <h1>Price vs Score</h1>
+  <h1>Price vs Score on Thai O-net year 2021 </h1>
+  <p> all data come from <a href="https://ai-vs-thai-exams.pages.dev/onet_m6" class="source-data">LLM Performance on Thai O-NET Tests</a></p>
   {dbError && (
     <div class="error-container">
       <p class="error">Database Error: {dbError}</p>
@@ -139,10 +146,16 @@ try {
     <div class="content-container">
       <div class="chart-section">
         <div class="chart-controls">
-          <label class="toggle-container">
-            <input type="checkbox" id="logScaleToggle" />
-            <span class="toggle-label">Use Logarithmic Scale for Price (X-axis)</span>
-          </label>
+          <div class="toggle-group">
+            <label class="toggle-container">
+              <input type="checkbox" id="logScaleToggle" checked />
+              <span class="toggle-label">Use Logarithmic Scale for Price (X-axis)</span>
+            </label>
+            <label class="toggle-container">
+              <input type="checkbox" id="showLabelsToggle" />
+              <span class="toggle-label">Show All Model Names</span>
+            </label>
+          </div>
         </div>
         <div class="chart-container">
           <canvas id="priceScoreChart"></canvas>
@@ -155,13 +168,10 @@ try {
           <table class="model-table">
             <thead>
               <tr>
-                <th>Icon</th>
-                <th>Model Name</th>
-                <th>Correct (%)</th>
-                <th>Total Cost ($)</th>
-                <th>Correct/Total</th>
-                <th>Prompt Cost ($)</th>
-                <th>Completion Cost ($)</th>
+                <th data-sort="none" data-field="icon" class="sortable">Icon <span class="sort-indicator"></span></th>
+                <th data-sort="none" data-field="model_name" class="sortable">Model Name <span class="sort-indicator"></span></th>
+                <th data-sort="desc" data-field="correct_pct" class="sortable active">Correct (%) <span class="sort-indicator">▼</span></th>
+                <th data-sort="none" data-field="total_cost_thb" class="sortable">Total Cost (฿) <span class="sort-indicator"></span></th>
               </tr>
             </thead>
             <tbody>
@@ -170,10 +180,7 @@ try {
                   <td><Icon name={row.icon} /></td>
                   <td class="model-name">{row.model_name}</td>
                   <td class="numeric">{row.correct_pct?.toFixed(2)}%</td>
-                  <td class="numeric">${row.total_cost_usd?.toFixed(4)}</td>
-                  <td class="numeric">{row.correct_count}/{row.total_count}</td>
-                  <td class="numeric">${row.prompt_cost_usd?.toFixed(4)}</td>
-                  <td class="numeric">${row.completion_cost_usd?.toFixed(4)}</td>
+                  <td class="numeric">{row.total_cost_thb?.toFixed(4)}</td>
                 </tr>
               ))}
             </tbody>
@@ -189,28 +196,122 @@ try {
   )}
 </section>
 
-<script type="module" src="/src/scripts/init-chart.js"></script>
+<script type="module" src="{import.meta.env.BASE_URL}/src/scripts/init-chart.js"></script>
 <script define:vars={{ priceScoresData: priceScores }}>
   let priceScoreChartInstance = null; // Variable to hold the chart instance
 
-  document.addEventListener('chartjs-ready', () => {
+    // Table sorting functionality
+  let currentSortField = 'correct_pct';
+  let currentSortDirection = 'desc';
+  
+  function sortTable(field) {
+    const headers = document.querySelectorAll('th.sortable');
+    
+    // Update sort direction
+    if (field === currentSortField) {
+      // Toggle direction if clicking the same header
+      currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Default to descending for new column
+      currentSortField = field;
+      currentSortDirection = 'desc';
+    }
+    
+    // Update header styles and indicators
+    headers.forEach(header => {
+      const headerField = header.getAttribute('data-field');
+      const indicator = header.querySelector('.sort-indicator');
+      
+      if (headerField === field) {
+        header.classList.add('active');
+        header.setAttribute('data-sort', currentSortDirection);
+        indicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+      } else {
+        header.classList.remove('active');
+        header.setAttribute('data-sort', 'none');
+        indicator.textContent = '';
+      }
+    });
+    
+    // Sort the table rows
+    const tbody = document.querySelector('.model-table tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Sort based on the current field and direction
+    rows.sort((a, b) => {
+      let aValue, bValue;
+      
+      if (field === 'model_name') {
+        // Text comparison for model name
+        aValue = a.querySelector('.model-name').textContent;
+        bValue = b.querySelector('.model-name').textContent;
+        return currentSortDirection === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      } else if (field === 'icon') {
+        // Sort by icon name using the data-icon-name attribute
+        const aIcon = a.querySelector('td:first-child .icon-style');
+        const bIcon = b.querySelector('td:first-child .icon-style');
+        
+        // Get icon name from data-icon-name attribute
+        aValue = aIcon?.getAttribute('data-icon-name') || aIcon?.textContent || '';
+        bValue = bIcon?.getAttribute('data-icon-name') || bIcon?.textContent || '';
+        
+        return currentSortDirection === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      } else {
+        // Numeric comparison for other fields
+        const aCell = a.querySelectorAll('.numeric')[field === 'correct_pct' ? 0 : 1];
+        const bCell = b.querySelectorAll('.numeric')[field === 'correct_pct' ? 0 : 1];
+        
+        // Parse the numeric values (remove % and convert to number)
+        aValue = parseFloat(aCell.textContent.replace('%', ''));
+        bValue = parseFloat(bCell.textContent.replace('%', ''));
+        
+        return currentSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+    });
+    
+    // Reappend rows in the new order
+    rows.forEach(row => tbody.appendChild(row));
+  }
+  
+  // Add click event listeners to sortable headers
+  document.addEventListener('DOMContentLoaded', () => {
+    const sortableHeaders = document.querySelectorAll('th.sortable');
+    sortableHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const field = header.getAttribute('data-field');
+        if (field) {
+          sortTable(field);
+        }
+      });
+    });
+  });
+
+document.addEventListener('chartjs-ready', () => {
     const ctx = document.getElementById('priceScoreChart');
     if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
       console.error('Canvas element #priceScoreChart not found or not a canvas.');
       return;
     }
 
-    if (typeof window.Chart === 'undefined' || typeof window.ChartDataLabels === 'undefined') {
+    if (!window.Chart || !window.ChartDataLabels) {
       console.error('Chart.js or ChartDataLabels plugin not found. Ensure init-chart.js loads them and run: bun install chartjs-plugin-datalabels');
       return;
     }
 
+    // Initialize state for toggles
+    let showLabels = false; // Default to hiding labels
+    let logScale = true; // Default to logarithmic scale
+    
     console.log('Chart.js ready, creating price vs score chart.');
 
     if (typeof priceScoresData !== 'undefined' && Array.isArray(priceScoresData)) {
       // Filter out data points with zero or negative cost for log scale compatibility
       const validPriceScoresData = priceScoresData.filter(item => 
-        (item.total_cost_usd !== undefined && item.total_cost_usd > 0)
+        (item.total_cost_thb !== undefined && item.total_cost_thb > 0)
       );
 
       // Group models by icon
@@ -236,25 +337,88 @@ try {
         'default': { backgroundColor: 'rgba(75, 192, 192, 0.8)', borderColor: 'rgba(75, 192, 192, 1)' }
       };
 
+      // Calculate proper Pareto frontier
+      // We want points that are not dominated by any other point
+      // A point is dominated if there exists another point with higher score and lower cost
+      
+      // Convert data to simple points for processing
+      const allPoints = validPriceScoresData.map(model => ({
+        x: model.total_cost_thb,
+        y: model.correct_pct,
+        model: model.model_name
+      }));
+      
+      // Find non-dominated points (true Pareto frontier)
+      const paretoPoints = [];
+      
+      // For each point, check if it's dominated by any other point
+      for (const point of allPoints) {
+        let isDominated = false;
+        
+        for (const otherPoint of allPoints) {
+          // A point dominates another if it has higher score and lower/equal cost
+          // OR equal score and lower cost
+          if (
+            (otherPoint.y > point.y && otherPoint.x <= point.x) ||
+            (otherPoint.y === point.y && otherPoint.x < point.x)
+          ) {
+            isDominated = true;
+            break;
+          }
+        }
+        
+        if (!isDominated) {
+          paretoPoints.push(point);
+        }
+      }
+      
+      // Sort points by x (cost) ascending for the line
+      paretoPoints.sort((a, b) => a.x - b.x);
+      
+      // Function to get friendly model name from icon identifier
+      const getFriendlyModelName = (iconName) => {
+        // Extract the model name from the icon identifier
+        if (iconName === 'ri:gemini-line') {
+          return "Gemma";
+        } else if (iconName === 'ri:gemini-fill') {
+          return "Gemini";
+        } else if (iconName.includes('ri:')) {
+          // Format: ri:openai-fill -> OpenAI
+          const baseName = iconName.replace('ri:', '').split('-')[0];
+          return baseName.charAt(0).toUpperCase() + baseName.slice(1);
+        } else if (iconName.includes('arcticons:')) {
+          // Format: arcticons:deepseek -> Deepseek
+          const baseName = iconName.replace('arcticons:', '');
+          return baseName.charAt(0).toUpperCase() + baseName.slice(1);
+        } else {
+          // Default case
+          return "other";
+        }
+      };
+
       // Create datasets for each icon group
       const datasets = Object.keys(modelsByIcon).map(icon => {
         const models = modelsByIcon[icon];
+        // Get the color for this icon, or use default if not found
+        const colorSet = iconColors[icon] || iconColors['default'];
+        // Get friendly model name for the legend
+        const friendlyName = getFriendlyModelName(icon);
         
         return {
-          label: icon,
+          label: friendlyName,
           data: models.map(model => ({
-            x: model.total_cost_usd,
+            x: model.total_cost_thb ,
             y: model.correct_pct
           })),
-          backgroundColor: color.backgroundColor,
-          borderColor: color.borderColor,
+          backgroundColor: colorSet.backgroundColor,
+          borderColor: colorSet.borderColor,
           borderWidth: 2,
           pointRadius: 10,
           pointHoverRadius: 14,
           pointStyle: 'circle',
           pointBorderWidth: 2,
           pointBorderColor: 'rgba(255, 255, 255, 0.8)',
-          pointBackgroundColor: color.backgroundColor,
+          pointBackgroundColor: colorSet.backgroundColor,
           hoverBorderWidth: 3,
           hoverBorderColor: 'white',
           labels: models.map(model => model.model_name)
@@ -264,6 +428,26 @@ try {
       // Register the datalabels plugin globally - init-chart.js might do this too
       window.Chart.register(window.ChartDataLabels);
 
+      // Add Pareto frontier dataset
+      datasets.push({
+        label: 'pareto frontier',
+        data: paretoPoints,
+        type: 'line',
+        fill: false,
+        borderColor: 'rgba(255, 255, 255, 0.9)',
+        borderWidth: 2,
+        borderDash: [], // Solid line like in the screenshot
+        pointRadius: 6, // Show points for models on the Pareto frontier
+        pointBackgroundColor: 'rgba(255, 255, 255, 0.9)',
+        pointBorderColor: 'rgba(0, 0, 0, 0.8)',
+        pointBorderWidth: 2,
+        tension: 0, // Straight lines between points
+        order: 0, // Ensure this dataset is drawn on top
+        stepped: false, // Ensure smooth line between points
+        // Custom labels for tooltips
+        labels: paretoPoints.map(point => `Best value at ${point.y.toFixed(2)}% (${point.model})`)
+      });
+      
       // Store the chart instance
       priceScoreChartInstance = new window.Chart(ctx, {
         type: 'scatter',
@@ -274,16 +458,27 @@ try {
           maintainAspectRatio: false,
           scales: {
             x: {
-              type: 'linear', // Start with linear scale
+              type: 'logarithmic', // Start with logarithmic scale
               position: 'bottom',
               title: {
                 display: true,
-                text: 'Completion Cost ($ / 1000 tokens)' // Clarified unit
+                text: 'Completion Cost (฿ / 1M tokens)' // Clarified unit
               }
             },
             y: {
               beginAtZero: false, // Scores don't have to start at 0
-              min: 0, // Ensure y-axis starts at 0
+              // Calculate the minimum y value from all datasets
+              min: function() {
+                // Find minimum score across all data points
+                const allScores = [];
+                validPriceScoresData.forEach(model => {
+                  allScores.push(model.correct_pct);
+                });
+                
+                // Find the minimum score and round down to nearest 10
+                const minScore = Math.min(...allScores);
+                return Math.floor(minScore / 10) * 10;
+              }(),
               max: 100, // Ensure y-axis ends at 100
               title: {
                 display: true,
@@ -314,9 +509,19 @@ try {
                 label: function(context) {
                   const label = context.dataset.label || '';
                   const dataPoint = context.raw;
+                  
+                  // Special handling for Pareto frontier points
+                  if (label === 'Pareto Frontier') {
+                    return [
+                      `Score: ${dataPoint.y.toFixed(2)}%`,
+                      `Cost: ฿${dataPoint.x.toFixed(2)}`,
+                      `Best value point`
+                    ];
+                  }
+                  
                   return [
                     `Score: ${dataPoint.y.toFixed(2)}%`,
-                    `Cost: $${dataPoint.x.toFixed(4)}`
+                    `Cost: ฿${dataPoint.x.toFixed(2)}`
                   ];
                 }
               }
@@ -324,6 +529,11 @@ try {
             datalabels: {
               color: 'white',
               backgroundColor: function(context) {
+                // Special handling for Pareto frontier points
+                if (context.dataset.label === 'Pareto Frontier') {
+                  return 'rgba(0, 0, 0, 0.8)';
+                }
+                
                 // Get the color of the point and add some opacity
                 // Use a darker background for better contrast with white text
                 const bgColor = context.dataset.backgroundColor;
@@ -345,6 +555,31 @@ try {
                 family: 'Arial'
               },
               formatter: (value, context) => {
+                // Special handling for Pareto frontier points
+                if (context.dataset.label === 'pareto frontier') {
+                  // Get the actual model name for Pareto frontier points
+                  const point = context.dataset.data[context.dataIndex];
+                  const modelName = point.model || '';
+                  
+                  // Intelligently shorten the model name
+                  if (modelName.length <= 10) {
+                    return modelName;
+                  } else if (modelName === 'gemini-fill') {
+                    return 'Gemma';
+                  } else if (modelName.startsWith('gemini-')) {
+                    const isThinking = modelName.endsWith('preview-04-17') ? '(thinking)' : '';
+                    return 'Gemini ' + modelName.split('-')[1] + ' ' + modelName.split('-')[2] + ' ' + isThinking;
+                  } else if (modelName.startsWith('claude-')) {
+                    return 'Claude ' + modelName.split('-')[1];
+                  } else if (modelName.startsWith('gpt-')) {
+                    return modelName.replace('gpt-', 'GPT ');
+                  } else if (modelName.startsWith('grok')) {
+                    return 'Grok ' + modelName.split('-')[1] + ' ' + modelName.split('-')[2];
+                  }else {
+                    return modelName.split('-')[0];
+                  }
+                }
+                
                 // Get the label for this data point
                 const label = context.dataset.labels[context.dataIndex];
                 if (!label) return '';
@@ -355,7 +590,9 @@ try {
                 }
                 
                 // For longer names, use intelligent shortening based on common patterns
-                if (label.startsWith('gemini-')) {
+                if (label === 'gemini-fill') {
+                  return 'Gemma';
+                } else if (label.startsWith('gemini-')) {
                   return 'Gemini ' + label.split('-')[1];
                 } else if (label.startsWith('claude-')) {
                   return 'Claude ' + label.split('-')[1];
@@ -370,6 +607,17 @@ try {
               align: 'top',
               offset: 8,
               display: function(context) {
+                // Special handling for Pareto frontier points
+                if (context.dataset.label === 'pareto frontier') {
+                  // Always show labels for all Pareto frontier points
+                  return true;
+                }
+                
+                // For non-Pareto frontier points, only show if the toggle is on
+                if (!showLabels) {
+                  return false;
+                }
+                
                 // Only show labels for a subset of points to reduce clutter
                 // For better readability, we'll be more selective about which labels to show
                 const datasetIndex = context.datasetIndex;
@@ -403,16 +651,65 @@ try {
         }
       });
 
-      // Add event listener for the toggle
+      // Add event listener for the log scale toggle
       const logScaleToggle = document.getElementById('logScaleToggle');
       if (logScaleToggle && priceScoreChartInstance) {
         logScaleToggle.addEventListener('change', (event) => {
           const isChecked = event.target instanceof HTMLInputElement ? event.target.checked : false;
-          priceScoreChartInstance.options.scales.x.type = isChecked ? 'logarithmic' : 'linear';
+          logScale = isChecked;
+          priceScoreChartInstance.options.scales.x.type = logScale ? 'logarithmic' : 'linear';
           
           // Logarithmic scale cannot handle 0 or negative values.
           // We already filtered the data initially.
           // If the user toggles back to linear, the original (filtered) data is still appropriate.
+          
+          priceScoreChartInstance.update();
+        });
+      }
+      
+      // Add event listener for the show/hide labels toggle
+      const showLabelsToggle = document.getElementById('showLabelsToggle');
+      if (showLabelsToggle && priceScoreChartInstance) {
+        showLabelsToggle.addEventListener('change', (event) => {
+          const isChecked = event.target instanceof HTMLInputElement ? event.target.checked : false;
+          showLabels = isChecked;
+                    // Update the datalabels plugin configuration
+          priceScoreChartInstance.options.plugins.datalabels.display = function(context) {
+            // Always show labels for Pareto frontier points, regardless of toggle state
+            if (context.dataset.label === 'pareto frontier') {
+              return true;
+            }
+            
+            // For non-Pareto frontier points, only show if the toggle is on
+            if (!showLabels) {
+              return false;
+            }
+            
+            // Only show labels for a subset of points to reduce clutter
+            // For better readability, we'll be more selective about which labels to show
+            const datasetIndex = context.datasetIndex;
+            const dataIndex = context.dataIndex;
+            const dataset = context.chart.data.datasets[datasetIndex];
+            const dataLength = dataset.data.length;
+            
+            // For very small datasets, show all labels
+            if (dataLength <= 3) {
+              return true;
+            }
+            // For small datasets, show every other label
+            else if (dataLength <= 8) {
+              return dataIndex % 2 === 0;
+            }
+            // For medium datasets, show every third label
+            else if (dataLength <= 15) {
+              return dataIndex % 3 === 0;
+            }
+            // For large datasets, show only a few strategic labels
+            else {
+              // Show first, last, and a few in between
+              return dataIndex === 0 || dataIndex === dataLength - 1 || dataIndex % 4 === 0;
+            }
+          };
           
           priceScoreChartInstance.update();
         });
@@ -433,7 +730,9 @@ try {
           usePointStyle: true,
           pointStyle: 'circle',
           boxWidth: 10,
-          boxHeight: 10
+          boxHeight: 10,
+          // Sort the legend items alphabetically for better readability
+          sort: (a, b) => (a.text > b.text) ? 1 : -1
         },
         title: {
           display: true,
@@ -492,6 +791,19 @@ try {
   background-color: rgba(40, 45, 55, 0.7);
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .toggle-group {
+    flex-direction: row;
+    justify-content: space-between;
+  }
 }
 
 .toggle-container {
@@ -652,5 +964,24 @@ input[type="checkbox"]:checked:after {
   .table-container h2 {
     font-size: 1.5rem;
   }
+}
+/* Sortable table styles */
+.sortable {
+  cursor: pointer;
+  position: relative;
+}
+
+.sort-indicator {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.8em;
+}
+
+th.active {
+  background-color: rgba(75, 192, 192, 0.3);
+}
+.source-data {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: underline;
 }
 </style>
