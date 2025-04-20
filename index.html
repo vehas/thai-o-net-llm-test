@@ -1,0 +1,568 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="description" content="Astro description"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v5.7.4"><title>LLM Analysis</title><style>*,:before,:after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}:before,:after{--tw-content: ""}html,:host{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dl,dd,h1,h2,h3,h4,h5,h6,hr,figure,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}ol,ul,menu{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}button,[role=button]{cursor:pointer}:disabled{cursor:default}img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]{display:none}*,:before,:after{--tw-border-spacing-x: 0;--tw-border-spacing-y: 0;--tw-translate-x: 0;--tw-translate-y: 0;--tw-rotate: 0;--tw-skew-x: 0;--tw-skew-y: 0;--tw-scale-x: 1;--tw-scale-y: 1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness: proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width: 0px;--tw-ring-offset-color: #fff;--tw-ring-color: rgb(59 130 246 / .5);--tw-ring-offset-shadow: 0 0 #0000;--tw-ring-shadow: 0 0 #0000;--tw-shadow: 0 0 #0000;--tw-shadow-colored: 0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x: 0;--tw-border-spacing-y: 0;--tw-translate-x: 0;--tw-translate-y: 0;--tw-rotate: 0;--tw-skew-x: 0;--tw-skew-y: 0;--tw-scale-x: 1;--tw-scale-y: 1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness: proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width: 0px;--tw-ring-offset-color: #fff;--tw-ring-color: rgb(59 130 246 / .5);--tw-ring-offset-shadow: 0 0 #0000;--tw-ring-shadow: 0 0 #0000;--tw-shadow: 0 0 #0000;--tw-shadow-colored: 0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }.collapse{visibility:collapse}.static{position:static}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.block{display:block}.flex{display:flex}.table{display:table}.hidden{display:none}.border-collapse{border-collapse:collapse}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skew(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.border{border-width:1px}.italic{font-style:italic}.underline{text-decoration-line:underline}.outline{outline-style:solid}.blur{--tw-blur: blur(8px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-filter{-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}:root{--accent: 136, 58, 234;--accent-light: 224, 204, 250;--accent-dark: 49, 10, 101;--accent-gradient: linear-gradient( 45deg, rgb(var(--accent)), rgb(var(--accent-light)) 30%, white 60% )}html{font-family:system-ui,sans-serif;background:#13151a;background-size:224px}code{font-family:Menlo,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New,monospace}[data-astro-cid-patnjmll][class^=ri--]{display:inline-block;width:24px;height:24px;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}.ri--openai-fill[data-astro-cid-patnjmll]{--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M20.562 10.188c.25-.688.313-1.376.25-2.063c-.062-.687-.312-1.375-.625-2c-.562-.937-1.375-1.687-2.312-2.125c-1-.437-2.063-.562-3.125-.312c-.5-.5-1.063-.938-1.688-1.25S11.687 2 11 2a5.17 5.17 0 0 0-3 .938c-.875.624-1.5 1.5-1.813 2.5c-.75.187-1.375.5-2 .875c-.562.437-1 1-1.375 1.562c-.562.938-.75 2-.625 3.063a5.44 5.44 0 0 0 1.25 2.874a4.7 4.7 0 0 0-.25 2.063c.063.688.313 1.375.625 2c.563.938 1.375 1.688 2.313 2.125c1 .438 2.062.563 3.125.313c.5.5 1.062.937 1.687 1.25S12.312 22 13 22a5.17 5.17 0 0 0 3-.937c.875-.625 1.5-1.5 1.812-2.5a4.54 4.54 0 0 0 1.938-.875c.562-.438 1.062-.938 1.375-1.563c.562-.937.75-2 .625-3.062c-.125-1.063-.5-2.063-1.188-2.876m-7.5 10.5c-1 0-1.75-.313-2.437-.875c0 0 .062-.063.125-.063l4-2.312a.5.5 0 0 0 .25-.25a.57.57 0 0 0 .062-.313V11.25l1.688 1v4.625a3.685 3.685 0 0 1-3.688 3.813M5 17.25c-.438-.75-.625-1.625-.438-2.5c0 0 .063.063.125.063l4 2.312a.56.56 0 0 0 .313.063c.125 0 .25 0 .312-.063l4.875-2.812v1.937l-4.062 2.375A3.7 3.7 0 0 1 7.312 19c-1-.25-1.812-.875-2.312-1.75M3.937 8.563a3.8 3.8 0 0 1 1.938-1.626v4.751c0 .124 0 .25.062.312a.5.5 0 0 0 .25.25l4.875 2.813l-1.687 1l-4-2.313a3.7 3.7 0 0 1-1.75-2.25c-.25-.937-.188-2.062.312-2.937M17.75 11.75l-4.875-2.812l1.687-1l4 2.312c.625.375 1.125.875 1.438 1.5s.5 1.313.437 2.063a3.7 3.7 0 0 1-.75 1.937c-.437.563-1 1-1.687 1.25v-4.75c0-.125 0-.25-.063-.312c0 0-.062-.126-.187-.188m1.687-2.5s-.062-.062-.125-.062l-4-2.313c-.125-.062-.187-.062-.312-.062s-.25 0-.313.062L9.812 9.688V7.75l4.063-2.375c.625-.375 1.312-.5 2.062-.5c.688 0 1.375.25 2 .688c.563.437 1.063 1 1.313 1.625s.312 1.375.187 2.062m-10.5 3.5l-1.687-1V7.063c0-.688.187-1.438.562-2C8.187 4.438 8.75 4 9.375 3.688a3.37 3.37 0 0 1 2.062-.313c.688.063 1.375.375 1.938.813c0 0-.063.062-.125.062l-4 2.313a.5.5 0 0 0-.25.25c-.063.125-.063.187-.063.312zm.875-2L12 9.5l2.187 1.25v2.5L12 14.5l-2.188-1.25z'/%3E%3C/svg%3E");-webkit-mask-image:var(--svg);mask-image:var(--svg)}.ri--claude-fill[data-astro-cid-patnjmll]{--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='m5.92 15.3l3.94-2.2l.06-.2l-.06-.1h-.2L9 12.76l-2.24-.06l-1.96-.1l-1.9-.1l-.48-.1l-.42-.6l.04-.3l.4-.26l.58.04l1.26.1l1.9.12l1.38.08l2.04.24h.32l.04-.14l-.1-.08l-.08-.08L7.8 10.2L5.68 8.8l-1.12-.82l-.6-.4l-.3-.4l-.12-.84l.54-.6l.74.06l.18.04l.74.58l1.6 1.22L9.4 9.2l.3.24l.12-.08l.02-.06l-.14-.22L8.6 7L7.4 4.92l-.54-.86l-.14-.52c-.06-.2-.08-.4-.08-.6l.6-.84l.36-.1l.84.12l.32.28l.52 1.2l.82 1.86l1.3 2.52l.4.76l.2.68l.06.2h.14v-.1l.1-1.44l.2-1.74l.2-2.24l.06-.64l.32-.76l.6-.4l.52.22l.4.58l-.06.36L14.32 5l-.52 2.42l-.3 1.64h.18l.2-.22l.82-1.08l1.38-1.72l.6-.7l.72-.74l.46-.36h.86l.62.94l-.28.98l-.88 1.12l-.74.94l-1.06 1.42l-.64 1.14l.06.08h.14l2.4-.52l1.28-.22l1.52-.26l.7.32l.08.32l-.28.68l-1.64.4l-1.92.4l-2.86.66l-.04.02l.04.06l1.28.12l.56.04h1.36l2.52.2l.66.4l.38.54l-.06.4l-1.02.52l-1.36-.32l-3.2-.76l-1.08-.26h-.16v.08l.92.9l1.66 1.5l2.12 1.94l.1.48l-.26.4l-.28-.04l-1.84-1.4l-.72-.6l-1.6-1.36h-.1v.14l.36.54l1.96 2.94l.1.9l-.14.28l-.52.2l-.54-.12l-1.16-1.6l-1.2-1.8l-.94-1.64l-.1.08l-.58 6.04l-.26.3l-.6.24l-.5-.4l-.28-.6l.28-1.24l.32-1.6l.26-1.28l.24-1.58l.14-.52v-.04h-.14l-1.2 1.66l-1.8 2.46l-1.44 1.52l-.34.14l-.6-.3l.06-.56l.32-.46l2-2.56l1.2-1.58l.8-.92l-.02-.1h-.06l-5.28 3.44l-.94.12l-.4-.4l.04-.6l.2-.2l1.6-1.1z'/%3E%3C/svg%3E");-webkit-mask-image:var(--svg);mask-image:var(--svg)}.ri--gemini-fill[data-astro-cid-patnjmll]{--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M24 12.024c-6.437.388-11.59 5.539-11.977 11.976h-.047C11.588 17.563 6.436 12.412 0 12.024v-.047C6.437 11.588 11.588 6.437 11.976 0h.047c.388 6.437 5.54 11.588 11.977 11.977z'/%3E%3C/svg%3E");-webkit-mask-image:var(--svg);mask-image:var(--svg)}.ri--gemini-line[data-astro-cid-patnjmll]{--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M24 12.024c-6.437.388-11.59 5.539-11.977 11.976h-.047C11.588 17.563 6.436 12.412 0 12.024v-.047C6.437 11.588 11.588 6.437 11.976 0h.047c.388 6.437 5.54 11.588 11.977 11.977z'/%3E%3C/svg%3E");-webkit-mask-image:var(--svg);mask-image:var(--svg)}.arcticons--deepseek[data-astro-cid-patnjmll]{display:inline-block;width:24px;height:24px;--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' d='M31.97 33.128c5.146-5.785 5.618-11.022 5.797-13.649' stroke-width='1'/%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' d='M37.764 19.48c4.61-.866 6.127-3.58 6.623-5.779c.269-1.19.016-1.792-.316-1.97c-.332-.18-.742.064-1.117.463c-1.892 2.01-3.02.998-4.405 1.37c-.765.206-1.218.796-1.655.56s-.86-1.303-1.476-1.745c-.617-.443-1.428-.264-1.982-.965c-.553-.7-.959-2.436-1.38-2.384c-.99 0-1.573 1.995-1.579 3.698c-.005 1.754.919 3.887 3.557 5.824c0 0-.455 1.457-.602 2.205h.004c-3.954-1.765-6.14-5.062-9.006-7.254c-.902-.69-.89-1.382-.325-1.888c.564-.506 1.555-.843 1.38-1.133c-.173-.29-1.512-.532-2.814-.353s-2.566.78-3.831 1.38c0 0-1.129-.727-3.19-.727c-8.454 0-12.15 6.554-12.15 12.119c0 6.636 6.091 16.07 16.107 16.07c7.585 0 9.221-3.111 9.221-3.111c3.708 1.206 6.08.788 6.924-.333c.753-1-2.268-1.808-3.784-2.399' stroke-width='1'/%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' d='M17.62 31.213c-1.018-.12-.156 2.938-.156 2.938c-2.034.442-4.743.295-8.299-4.835c-2.885-4.162-3.427-8.892-1.975-9.232c1.45-.34 5.668.345 8.64 2.403c2.974 2.059 5.858 5.86 7.827 8.191s3.04 3.558 5.171 5.182c-7.119-.45-8.582-4.339-11.207-4.647m8.454-10.385c2.442 0 4.771 3.392 4.771 4.927c0 .618-.721.783-1.607.783s-2.154-.412-2.154-2.04s-.122-2.329-1.44-2.329s-.992-1.34.43-1.34' stroke-width='1'/%3E%3Ccircle cx='25.294' cy='23.751' r='.735' fill='%23000'/%3E%3C/svg%3E");background-color:currentColor;-webkit-mask-image:var(--svg);mask-image:var(--svg);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}.ri--twitter-x-line[data-astro-cid-patnjmll]{display:inline-block;width:24px;height:24px;--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='m17.687 3.063l-4.996 5.711l-4.32-5.711H2.112l7.477 9.776l-7.086 8.099h3.034l5.469-6.25l4.78 6.25h6.102l-7.794-10.304l6.625-7.571zm-1.064 16.06L5.654 4.782h1.803l10.846 14.34z'/%3E%3C/svg%3E");background-color:currentColor;-webkit-mask-image:var(--svg);mask-image:var(--svg);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}.ri--meta-fill[data-astro-cid-patnjmll]{display:inline-block;width:24px;height:24px;--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16.92 4.5c-1.851 0-3.298 1.394-4.608 3.165C10.512 5.373 9.007 4.5 7.206 4.5C3.534 4.5.72 9.28.72 14.338c0 3.165 1.531 5.162 4.096 5.162c1.846 0 3.174-.87 5.535-4.997c0 0 .984-1.737 1.66-2.934q.356.574.75 1.238l1.107 1.862c2.156 3.608 3.358 4.831 5.534 4.831c2.5 0 3.89-2.024 3.89-5.255c0-5.297-2.877-9.745-6.372-9.745m-8.37 8.886c-1.913 3-2.575 3.673-3.64 3.673c-1.097 0-1.749-.963-1.749-2.68c0-3.672 1.831-7.427 4.014-7.427c1.182 0 2.17.682 3.683 2.848c-1.437 2.204-2.307 3.586-2.307 3.586m7.224-.377L14.45 10.8a45 45 0 0 0-1.032-1.608c1.193-1.841 2.176-2.759 3.347-2.759c2.43 0 4.375 3.58 4.375 7.976c0 1.676-.549 2.649-1.686 2.649c-1.09 0-1.61-.72-3.68-4.05'/%3E%3C/svg%3E");background-color:currentColor;-webkit-mask-image:var(--svg);mask-image:var(--svg);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}.ri--microsoft-fill[data-astro-cid-patnjmll]{display:inline-block;width:24px;height:24px;--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M11.501 3v8.5h-8.5V3zm0 18h-8.5v-8.5h8.5zm1-18h8.5v8.5h-8.5zm8.5 9.5V21h-8.5v-8.5z'/%3E%3C/svg%3E");background-color:currentColor;-webkit-mask-image:var(--svg);mask-image:var(--svg);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}.ri--alibaba-cloud-fill[data-astro-cid-patnjmll]{display:inline-block;width:24px;height:24px;--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9.514 5.14H4.68A3.68 3.68 0 0 0 1 8.82v6.358a3.68 3.68 0 0 0 3.68 3.68h4.85L8.36 17.2l-3.538-1.08a1.54 1.54 0 0 1-1.07-1.472V9.37a1.53 1.53 0 0 1 1.07-1.47l3.536-1.104zm9.825 0h-4.85l1.17 1.656L19.195 7.9a1.53 1.53 0 0 1 1.067 1.471v5.277a1.535 1.535 0 0 1-1.067 1.472L15.66 17.2l-1.17 1.656h4.85a3.66 3.66 0 0 0 3.66-3.68V8.82a3.68 3.68 0 0 0-3.66-3.68m-3.672 5.998h-7.33v1.652h7.33z'/%3E%3C/svg%3E");background-color:currentColor;-webkit-mask-image:var(--svg);mask-image:var(--svg);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}.content-container[data-astro-cid-t2jly3rj]{display:flex;flex-direction:column;gap:2.5rem;width:100%}.chart-section[data-astro-cid-t2jly3rj]{background-color:#1e232db3;border-radius:12px;padding:1.5rem;box-shadow:0 8px 16px #0003}.chart-container[data-astro-cid-t2jly3rj]{position:relative;height:550px;margin-bottom:1rem;border-radius:8px;overflow:hidden;background-color:#141923b3;padding:1.5rem}#priceScoreChart[data-astro-cid-t2jly3rj]{display:block;box-sizing:border-box;height:100%;width:100%}.chart-controls[data-astro-cid-t2jly3rj]{margin-bottom:1.5rem;padding:.75rem 1rem;background-color:#282d37b3;border-radius:8px;box-shadow:0 4px 8px #0000001a}.toggle-group[data-astro-cid-t2jly3rj]{display:flex;flex-direction:column;gap:.75rem}@media (min-width: 768px){.toggle-group[data-astro-cid-t2jly3rj]{flex-direction:row;justify-content:space-between}}.toggle-container[data-astro-cid-t2jly3rj]{display:flex;align-items:center;gap:.75rem;cursor:pointer}.toggle-label[data-astro-cid-t2jly3rj]{font-size:1rem;font-weight:500;color:#ffffffe6}input[data-astro-cid-t2jly3rj][type=checkbox]{-moz-appearance:none;appearance:none;-webkit-appearance:none;width:3.5em;height:1.5em;background:#323741e6;border-radius:1em;position:relative;cursor:pointer;outline:none;transition:all .2s ease-in-out}input[data-astro-cid-t2jly3rj][type=checkbox]:checked{background:#4bc0c0b3}input[data-astro-cid-t2jly3rj][type=checkbox]:after{content:"";position:absolute;width:1.2em;height:1.2em;border-radius:50%;background:#fff;box-shadow:0 0 .25em #0000004d;transform:scale(.8);left:.15em;top:.15em;transition:all .2s ease-in-out}input[data-astro-cid-t2jly3rj][type=checkbox]:checked:after{left:calc(100% - 1.4em)}.table-container[data-astro-cid-t2jly3rj]{background-color:#1e232db3;border-radius:12px;padding:1.5rem;box-shadow:0 8px 16px #0003}.table-container[data-astro-cid-t2jly3rj] h2[data-astro-cid-t2jly3rj]{font-size:1.8rem;margin-bottom:1rem;color:#ffffffe6;text-align:center;font-weight:600}.table-wrapper[data-astro-cid-t2jly3rj]{overflow-x:auto;border-radius:8px;box-shadow:0 4px 8px #0000001a}.model-table[data-astro-cid-t2jly3rj]{width:100%;border-collapse:separate;border-spacing:0;background-color:#282d37b3;border-radius:8px;overflow:hidden}.model-table[data-astro-cid-t2jly3rj] th[data-astro-cid-t2jly3rj]{background-color:#3c414be6;color:#ffffffe6;padding:1rem;text-align:left;font-weight:600;position:sticky;top:0;z-index:10}.model-table[data-astro-cid-t2jly3rj] td[data-astro-cid-t2jly3rj]{padding:.8rem 1rem;border-bottom:1px solid rgba(80,85,95,.5);color:#fffc}.model-table[data-astro-cid-t2jly3rj] tr[data-astro-cid-t2jly3rj]:last-child td[data-astro-cid-t2jly3rj]{border-bottom:none}.model-table[data-astro-cid-t2jly3rj] tr[data-astro-cid-t2jly3rj]:hover{background-color:#4bc0c026}.model-name[data-astro-cid-t2jly3rj]{font-weight:500}.numeric[data-astro-cid-t2jly3rj]{text-align:right;font-family:SF Mono,Menlo,monospace}.icon-style[data-astro-cid-t2jly3rj]{display:inline-block}.error-container[data-astro-cid-t2jly3rj]{background-color:#dc354533;border-radius:8px;padding:1rem;margin-bottom:1.5rem;border-left:4px solid rgba(220,53,69,.8)}.error[data-astro-cid-t2jly3rj]{color:#ff6464;font-weight:500;margin:0}.empty-state[data-astro-cid-t2jly3rj]{display:flex;justify-content:center;align-items:center;height:200px;background-color:#1e232db3;border-radius:12px;color:#fff9;font-style:italic}@media (max-width: 768px){.chart-container[data-astro-cid-t2jly3rj]{height:400px}.model-table[data-astro-cid-t2jly3rj] th[data-astro-cid-t2jly3rj],.model-table[data-astro-cid-t2jly3rj] td[data-astro-cid-t2jly3rj]{padding:.6rem .8rem;font-size:.9rem}.table-container[data-astro-cid-t2jly3rj] h2[data-astro-cid-t2jly3rj]{font-size:1.5rem}}.sortable[data-astro-cid-t2jly3rj]{cursor:pointer;position:relative}.sort-indicator[data-astro-cid-t2jly3rj]{display:inline-block;margin-left:5px;font-size:.8em}th[data-astro-cid-t2jly3rj].active{background-color:#4bc0c04d}.source-data[data-astro-cid-t2jly3rj]{color:#fffc;text-decoration:underline}html{scroll-behavior:smooth}main[data-astro-cid-j7pv25f6]{margin:auto;padding:6rem 1rem 1rem;width:90%;max-width:1200px;color:#fff;font-size:20px;line-height:1.6}section[data-astro-cid-j7pv25f6]{min-height:80vh;padding-top:4rem;margin-bottom:4rem;border-bottom:1px solid rgba(var(--accent-light),10%)}section[data-astro-cid-j7pv25f6]:last-of-type{border-bottom:none;margin-bottom:0}h1[data-astro-cid-j7pv25f6]{font-size:3rem;font-weight:700;line-height:1;text-align:center;margin-bottom:1em}
+</style></head> <body>   <main data-astro-cid-j7pv25f6>  <section id="price-correctness" data-astro-cid-t2jly3rj> <h1 data-astro-cid-t2jly3rj>Price vs Score on Thai O-net year 2021 </h1> <p data-astro-cid-t2jly3rj> all data come from <a href="https://ai-vs-thai-exams.pages.dev/onet_m6" class="source-data" data-astro-cid-t2jly3rj>LLM Performance on Thai O-NET Tests</a></p>  <div class="content-container" data-astro-cid-t2jly3rj> <div class="chart-section" data-astro-cid-t2jly3rj> <div class="chart-controls" data-astro-cid-t2jly3rj> <div class="toggle-group" data-astro-cid-t2jly3rj> <label class="toggle-container" data-astro-cid-t2jly3rj> <input type="checkbox" id="logScaleToggle" checked data-astro-cid-t2jly3rj> <span class="toggle-label" data-astro-cid-t2jly3rj>Use Logarithmic Scale for Price (X-axis)</span> </label> <label class="toggle-container" data-astro-cid-t2jly3rj> <input type="checkbox" id="showLabelsToggle" data-astro-cid-t2jly3rj> <span class="toggle-label" data-astro-cid-t2jly3rj>Show All Model Names</span> </label> </div> </div> <div class="chart-container" data-astro-cid-t2jly3rj> <canvas id="priceScoreChart" data-astro-cid-t2jly3rj></canvas> </div> </div> <div class="table-container" data-astro-cid-t2jly3rj> <h2 data-astro-cid-t2jly3rj>Model Performance Data</h2> <div class="table-wrapper" data-astro-cid-t2jly3rj> <table class="model-table" data-astro-cid-t2jly3rj> <thead data-astro-cid-t2jly3rj> <tr data-astro-cid-t2jly3rj> <th data-sort="none" data-field="icon" class="sortable" data-astro-cid-t2jly3rj>Icon <span class="sort-indicator" data-astro-cid-t2jly3rj></span></th> <th data-sort="none" data-field="model_name" class="sortable" data-astro-cid-t2jly3rj>Model Name <span class="sort-indicator" data-astro-cid-t2jly3rj></span></th> <th data-sort="desc" data-field="correct_pct" class="sortable active" data-astro-cid-t2jly3rj>Correct (%) <span class="sort-indicator" data-astro-cid-t2jly3rj>▼</span></th> <th data-sort="none" data-field="total_cost_thb" class="sortable" data-astro-cid-t2jly3rj>Total Cost (฿) <span class="sort-indicator" data-astro-cid-t2jly3rj></span></th> </tr> </thead> <tbody data-astro-cid-t2jly3rj> <tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-2.5-pro-preview-03-25</td> <td class="numeric" data-astro-cid-t2jly3rj>91.46%</td> <td class="numeric" data-astro-cid-t2jly3rj>77.5110</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--claude-fill" data-icon-name="ri:claude-fill" alt="ri:claude-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>claude-3-7-sonnet-20250219[thinking=16k]</td> <td class="numeric" data-astro-cid-t2jly3rj>89.02%</td> <td class="numeric" data-astro-cid-t2jly3rj>155.4420</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o1-2024-12-17</td> <td class="numeric" data-astro-cid-t2jly3rj>88.41%</td> <td class="numeric" data-astro-cid-t2jly3rj>519.0710</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o3-2025-04-16[low]</td> <td class="numeric" data-astro-cid-t2jly3rj>87.80%</td> <td class="numeric" data-astro-cid-t2jly3rj>141.6835</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-2.5-flash-preview-04-17</td> <td class="numeric" data-astro-cid-t2jly3rj>87.20%</td> <td class="numeric" data-astro-cid-t2jly3rj>28.3710</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o3-2025-04-16[high]</td> <td class="numeric" data-astro-cid-t2jly3rj>87.20%</td> <td class="numeric" data-astro-cid-t2jly3rj>324.2330</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-2.5-flash-preview-04-17[no-thinking]</td> <td class="numeric" data-astro-cid-t2jly3rj>86.59%</td> <td class="numeric" data-astro-cid-t2jly3rj>1.3020</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o3-2025-04-16[medium]</td> <td class="numeric" data-astro-cid-t2jly3rj>86.59%</td> <td class="numeric" data-astro-cid-t2jly3rj>206.6995</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o4-mini-2025-04-16[medium]</td> <td class="numeric" data-astro-cid-t2jly3rj>84.76%</td> <td class="numeric" data-astro-cid-t2jly3rj>21.6545</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o4-mini-2025-04-16[high]</td> <td class="numeric" data-astro-cid-t2jly3rj>84.15%</td> <td class="numeric" data-astro-cid-t2jly3rj>40.5440</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="arcticons--deepseek" data-icon-name="arcticons:deepseek" alt="arcticons:deepseek" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>deepseek-r1</td> <td class="numeric" data-astro-cid-t2jly3rj>82.93%</td> <td class="numeric" data-astro-cid-t2jly3rj>44.8525</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--twitter-x-line" data-icon-name="ri:twitter-x-line" alt="ri:twitter-x-line" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>grok-3-mini-beta</td> <td class="numeric" data-astro-cid-t2jly3rj>82.32%</td> <td class="numeric" data-astro-cid-t2jly3rj>1.0815</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-2.0-flash-thinking-exp-01-21</td> <td class="numeric" data-astro-cid-t2jly3rj>81.10%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.0000</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o4-mini-2025-04-16[low]</td> <td class="numeric" data-astro-cid-t2jly3rj>81.10%</td> <td class="numeric" data-astro-cid-t2jly3rj>24.1465</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--claude-fill" data-icon-name="ri:claude-fill" alt="ri:claude-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>claude-3-5-sonnet-20241022</td> <td class="numeric" data-astro-cid-t2jly3rj>80.49%</td> <td class="numeric" data-astro-cid-t2jly3rj>33.8240</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gpt-4.1-2025-04-14</td> <td class="numeric" data-astro-cid-t2jly3rj>79.88%</td> <td class="numeric" data-astro-cid-t2jly3rj>11.7320</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--alibaba-cloud-fill" data-icon-name="ri:alibaba-cloud-fill" alt="ri:alibaba-cloud-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>qwq-32b</td> <td class="numeric" data-astro-cid-t2jly3rj>78.66%</td> <td class="numeric" data-astro-cid-t2jly3rj>13.9405</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="arcticons--deepseek" data-icon-name="arcticons:deepseek" alt="arcticons:deepseek" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>deepseek-chat-v3-0324</td> <td class="numeric" data-astro-cid-t2jly3rj>78.66%</td> <td class="numeric" data-astro-cid-t2jly3rj>5.2080</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gpt-4.5-preview-2025-02-27</td> <td class="numeric" data-astro-cid-t2jly3rj>78.05%</td> <td class="numeric" data-astro-cid-t2jly3rj>316.1970</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--meta-fill" data-icon-name="ri:meta-fill" alt="ri:meta-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>llama-4-maverick</td> <td class="numeric" data-astro-cid-t2jly3rj>77.44%</td> <td class="numeric" data-astro-cid-t2jly3rj>1.3265</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o3-mini-2025-01-31[high]</td> <td class="numeric" data-astro-cid-t2jly3rj>77.44%</td> <td class="numeric" data-astro-cid-t2jly3rj>75.3200</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o3-mini-2025-01-31[low]</td> <td class="numeric" data-astro-cid-t2jly3rj>77.44%</td> <td class="numeric" data-astro-cid-t2jly3rj>36.0430</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--claude-fill" data-icon-name="ri:claude-fill" alt="ri:claude-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>claude-3-7-sonnet-20250219</td> <td class="numeric" data-astro-cid-t2jly3rj>76.83%</td> <td class="numeric" data-astro-cid-t2jly3rj>28.2730</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-2.0-flash-001</td> <td class="numeric" data-astro-cid-t2jly3rj>75.61%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.6160</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>o3-mini-2025-01-31[medium]</td> <td class="numeric" data-astro-cid-t2jly3rj>73.78%</td> <td class="numeric" data-astro-cid-t2jly3rj>36.4350</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--alibaba-cloud-fill" data-icon-name="ri:alibaba-cloud-fill" alt="ri:alibaba-cloud-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>qwen-max-2025-01-25</td> <td class="numeric" data-astro-cid-t2jly3rj>73.17%</td> <td class="numeric" data-astro-cid-t2jly3rj>15.3930</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-1.5-pro-002</td> <td class="numeric" data-astro-cid-t2jly3rj>72.56%</td> <td class="numeric" data-astro-cid-t2jly3rj>8.6275</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-fill" data-icon-name="ri:gemini-fill" alt="ri:gemini-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemini-2.0-flash-lite-001</td> <td class="numeric" data-astro-cid-t2jly3rj>72.56%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.7490</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--gemini-line" data-icon-name="ri:gemini-line" alt="ri:gemini-line" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gemma-3-27b-it</td> <td class="numeric" data-astro-cid-t2jly3rj>71.95%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.3990</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gpt-4o-2024-08-06</td> <td class="numeric" data-astro-cid-t2jly3rj>71.34%</td> <td class="numeric" data-astro-cid-t2jly3rj>19.4110</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--twitter-x-line" data-icon-name="ri:twitter-x-line" alt="ri:twitter-x-line" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>grok-3-beta</td> <td class="numeric" data-astro-cid-t2jly3rj>69.51%</td> <td class="numeric" data-astro-cid-t2jly3rj>23.7965</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gpt-4.1-mini-2025-04-14</td> <td class="numeric" data-astro-cid-t2jly3rj>69.51%</td> <td class="numeric" data-astro-cid-t2jly3rj>2.4185</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>typhoon-v2-r1-70b-preview</td> <td class="numeric" data-astro-cid-t2jly3rj>67.68%</td> <td class="numeric" data-astro-cid-t2jly3rj>4.7775</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>typhoon-v2-70b-instruct</td> <td class="numeric" data-astro-cid-t2jly3rj>64.02%</td> <td class="numeric" data-astro-cid-t2jly3rj>3.4965</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--meta-fill" data-icon-name="ri:meta-fill" alt="ri:meta-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>llama-3.3-70b-instruct</td> <td class="numeric" data-astro-cid-t2jly3rj>63.41%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.7560</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--meta-fill" data-icon-name="ri:meta-fill" alt="ri:meta-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>llama-4-scout</td> <td class="numeric" data-astro-cid-t2jly3rj>62.80%</td> <td class="numeric" data-astro-cid-t2jly3rj>1.5610</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>mistral-large-2411</td> <td class="numeric" data-astro-cid-t2jly3rj>59.15%</td> <td class="numeric" data-astro-cid-t2jly3rj>14.4585</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gpt-4o-mini-2024-07-18</td> <td class="numeric" data-astro-cid-t2jly3rj>59.15%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.8470</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>command-a-03-2025</td> <td class="numeric" data-astro-cid-t2jly3rj>54.27%</td> <td class="numeric" data-astro-cid-t2jly3rj>29.1585</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--microsoft-fill" data-icon-name="ri:microsoft-fill" alt="ri:microsoft-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>phi-4</td> <td class="numeric" data-astro-cid-t2jly3rj>53.66%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.6440</td> </tr><tr data-astro-cid-t2jly3rj> <td data-astro-cid-t2jly3rj><span class="ri--openai-fill" data-icon-name="ri:openai-fill" alt="ri:openai-fill" data-astro-cid-patnjmll></span> </td> <td class="model-name" data-astro-cid-t2jly3rj>gpt-4.1-nano-2025-04-14</td> <td class="numeric" data-astro-cid-t2jly3rj>51.22%</td> <td class="numeric" data-astro-cid-t2jly3rj>0.6335</td> </tr> </tbody> </table> </div> </div> </div>  </section> <!-- Use CDN links for Chart.js and plugins to ensure they work in static builds --> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script> <script>
+  // Register the datalabels plugin when both libraries are loaded
+  if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+    console.log('Chart.js and DataLabels plugin initialized and registered.');
+  }
+</script> <script>(function(){const priceScoresData = [{"model_name":"gemini-2.5-pro-preview-03-25","icon":"ri:gemini-fill","correct_count":150,"total_count":164,"correct_pct":91.46,"prompt_cost_usd":0.0652,"completion_cost_usd":2.1494,"total_cost_usd":2.2146,"total_cost_thb":77.511},{"model_name":"claude-3-7-sonnet-20250219[thinking=16k]","icon":"ri:claude-fill","correct_count":146,"total_count":164,"correct_pct":89.02,"prompt_cost_usd":0.2824,"completion_cost_usd":4.1588,"total_cost_usd":4.4412,"total_cost_thb":155.442},{"model_name":"o1-2024-12-17","icon":"ri:openai-fill","correct_count":145,"total_count":164,"correct_pct":88.41,"prompt_cost_usd":0.8585,"completion_cost_usd":13.972,"total_cost_usd":14.8306,"total_cost_thb":519.071},{"model_name":"o3-2025-04-16[low]","icon":"ri:openai-fill","correct_count":144,"total_count":164,"correct_pct":87.8,"prompt_cost_usd":0.5756,"completion_cost_usd":3.4725,"total_cost_usd":4.0481,"total_cost_thb":141.6835},{"model_name":"gemini-2.5-flash-preview-04-17","icon":"ri:gemini-fill","correct_count":143,"total_count":164,"correct_pct":87.2,"prompt_cost_usd":0.0078,"completion_cost_usd":0.8027,"total_cost_usd":0.8106,"total_cost_thb":28.371},{"model_name":"o3-2025-04-16[high]","icon":"ri:openai-fill","correct_count":143,"total_count":164,"correct_pct":87.2,"prompt_cost_usd":0.567,"completion_cost_usd":8.6968,"total_cost_usd":9.2638,"total_cost_thb":324.233},{"model_name":"gemini-2.5-flash-preview-04-17[no-thinking]","icon":"ri:gemini-fill","correct_count":142,"total_count":164,"correct_pct":86.59,"prompt_cost_usd":0.0078,"completion_cost_usd":0.0294,"total_cost_usd":0.0372,"total_cost_thb":1.302},{"model_name":"o3-2025-04-16[medium]","icon":"ri:openai-fill","correct_count":142,"total_count":164,"correct_pct":86.59,"prompt_cost_usd":0.57,"completion_cost_usd":5.3357,"total_cost_usd":5.9057,"total_cost_thb":206.6995},{"model_name":"o4-mini-2025-04-16[medium]","icon":"ri:openai-fill","correct_count":139,"total_count":164,"correct_pct":84.76,"prompt_cost_usd":0.0633,"completion_cost_usd":0.5554,"total_cost_usd":0.6187,"total_cost_thb":21.6545},{"model_name":"o4-mini-2025-04-16[high]","icon":"ri:openai-fill","correct_count":138,"total_count":164,"correct_pct":84.15,"prompt_cost_usd":0.0633,"completion_cost_usd":1.0951,"total_cost_usd":1.1584,"total_cost_thb":40.544},{"model_name":"deepseek-r1","icon":"arcticons:deepseek","correct_count":136,"total_count":164,"correct_pct":82.93,"prompt_cost_usd":0.1587,"completion_cost_usd":1.1228,"total_cost_usd":1.2815,"total_cost_thb":44.8525},{"model_name":"grok-3-mini-beta","icon":"ri:twitter-x-line","correct_count":135,"total_count":164,"correct_pct":82.32,"prompt_cost_usd":0.0172,"completion_cost_usd":0.0138,"total_cost_usd":0.0309,"total_cost_thb":1.0815},{"model_name":"gemini-2.0-flash-thinking-exp-01-21","icon":"ri:gemini-fill","correct_count":133,"total_count":164,"correct_pct":81.1,"prompt_cost_usd":0,"completion_cost_usd":0,"total_cost_usd":0,"total_cost_thb":0},{"model_name":"o4-mini-2025-04-16[low]","icon":"ri:openai-fill","correct_count":133,"total_count":164,"correct_pct":81.1,"prompt_cost_usd":0.0633,"completion_cost_usd":0.6266,"total_cost_usd":0.6899,"total_cost_thb":24.1465},{"model_name":"claude-3-5-sonnet-20241022","icon":"ri:claude-fill","correct_count":132,"total_count":164,"correct_pct":80.49,"prompt_cost_usd":0.2686,"completion_cost_usd":0.6978,"total_cost_usd":0.9664,"total_cost_thb":33.824},{"model_name":"gpt-4.1-2025-04-14","icon":"ri:openai-fill","correct_count":131,"total_count":164,"correct_pct":79.88,"prompt_cost_usd":0.1148,"completion_cost_usd":0.2204,"total_cost_usd":0.3352,"total_cost_thb":11.732},{"model_name":"qwq-32b","icon":"ri:alibaba-cloud-fill","correct_count":129,"total_count":164,"correct_pct":78.66,"prompt_cost_usd":0.0808,"completion_cost_usd":0.3175,"total_cost_usd":0.3983,"total_cost_thb":13.9405},{"model_name":"deepseek-chat-v3-0324","icon":"arcticons:deepseek","correct_count":129,"total_count":164,"correct_pct":78.66,"prompt_cost_usd":0.0793,"completion_cost_usd":0.0694,"total_cost_usd":0.1488,"total_cost_thb":5.208},{"model_name":"gpt-4.5-preview-2025-02-27","icon":"ri:openai-fill","correct_count":128,"total_count":164,"correct_pct":78.05,"prompt_cost_usd":4.305,"completion_cost_usd":4.7292,"total_cost_usd":9.0342,"total_cost_thb":316.197},{"model_name":"llama-4-maverick","icon":"ri:meta-fill","correct_count":127,"total_count":164,"correct_pct":77.44,"prompt_cost_usd":0.01,"completion_cost_usd":0.0279,"total_cost_usd":0.0379,"total_cost_thb":1.3265},{"model_name":"o3-mini-2025-01-31[high]","icon":"ri:openai-fill","correct_count":127,"total_count":164,"correct_pct":77.44,"prompt_cost_usd":0.063,"completion_cost_usd":2.089,"total_cost_usd":2.152,"total_cost_thb":75.32},{"model_name":"o3-mini-2025-01-31[low]","icon":"ri:openai-fill","correct_count":127,"total_count":164,"correct_pct":77.44,"prompt_cost_usd":0.063,"completion_cost_usd":0.9669,"total_cost_usd":1.0298,"total_cost_thb":36.043},{"model_name":"claude-3-7-sonnet-20250219","icon":"ri:claude-fill","correct_count":126,"total_count":164,"correct_pct":76.83,"prompt_cost_usd":0.2686,"completion_cost_usd":0.5392,"total_cost_usd":0.8078,"total_cost_thb":28.273},{"model_name":"gemini-2.0-flash-001","icon":"ri:gemini-fill","correct_count":124,"total_count":164,"correct_pct":75.61,"prompt_cost_usd":0.0055,"completion_cost_usd":0.0121,"total_cost_usd":0.0176,"total_cost_thb":0.616},{"model_name":"o3-mini-2025-01-31[medium]","icon":"ri:openai-fill","correct_count":121,"total_count":164,"correct_pct":73.78,"prompt_cost_usd":0.063,"completion_cost_usd":0.978,"total_cost_usd":1.041,"total_cost_thb":36.435},{"model_name":"qwen-max-2025-01-25","icon":"ri:alibaba-cloud-fill","correct_count":120,"total_count":164,"correct_pct":73.17,"prompt_cost_usd":0.1049,"completion_cost_usd":0.3349,"total_cost_usd":0.4398,"total_cost_thb":15.393},{"model_name":"gemini-1.5-pro-002","icon":"ri:gemini-fill","correct_count":119,"total_count":164,"correct_pct":72.56,"prompt_cost_usd":0.0686,"completion_cost_usd":0.178,"total_cost_usd":0.2465,"total_cost_thb":8.6275},{"model_name":"gemini-2.0-flash-lite-001","icon":"ri:gemini-fill","correct_count":119,"total_count":164,"correct_pct":72.56,"prompt_cost_usd":0.0055,"completion_cost_usd":0.016,"total_cost_usd":0.0214,"total_cost_thb":0.749},{"model_name":"gemma-3-27b-it","icon":"ri:gemini-line","correct_count":118,"total_count":164,"correct_pct":71.95,"prompt_cost_usd":0.006,"completion_cost_usd":0.0054,"total_cost_usd":0.0114,"total_cost_thb":0.399},{"model_name":"gpt-4o-2024-08-06","icon":"ri:openai-fill","correct_count":117,"total_count":164,"correct_pct":71.34,"prompt_cost_usd":0.1435,"completion_cost_usd":0.4111,"total_cost_usd":0.5546,"total_cost_thb":19.411},{"model_name":"grok-3-beta","icon":"ri:twitter-x-line","correct_count":114,"total_count":164,"correct_pct":69.51,"prompt_cost_usd":0.1714,"completion_cost_usd":0.5085,"total_cost_usd":0.6799,"total_cost_thb":23.7965},{"model_name":"gpt-4.1-mini-2025-04-14","icon":"ri:openai-fill","correct_count":114,"total_count":164,"correct_pct":69.51,"prompt_cost_usd":0.023,"completion_cost_usd":0.0462,"total_cost_usd":0.0691,"total_cost_thb":2.4185},{"model_name":"typhoon-v2-r1-70b-preview","icon":null,"correct_count":111,"total_count":164,"correct_pct":67.68,"prompt_cost_usd":0.0574,"completion_cost_usd":0.0791,"total_cost_usd":0.1365,"total_cost_thb":4.7775},{"model_name":"typhoon-v2-70b-instruct","icon":null,"correct_count":105,"total_count":164,"correct_pct":64.02,"prompt_cost_usd":0.0584,"completion_cost_usd":0.0414,"total_cost_usd":0.0999,"total_cost_thb":3.4965},{"model_name":"llama-3.3-70b-instruct","icon":"ri:meta-fill","correct_count":104,"total_count":164,"correct_pct":63.41,"prompt_cost_usd":0.0064,"completion_cost_usd":0.0152,"total_cost_usd":0.0216,"total_cost_thb":0.756},{"model_name":"llama-4-scout","icon":"ri:meta-fill","correct_count":103,"total_count":164,"correct_pct":62.8,"prompt_cost_usd":0.0103,"completion_cost_usd":0.0343,"total_cost_usd":0.0446,"total_cost_thb":1.561},{"model_name":"mistral-large-2411","icon":null,"correct_count":97,"total_count":164,"correct_pct":59.15,"prompt_cost_usd":0.1892,"completion_cost_usd":0.224,"total_cost_usd":0.4131,"total_cost_thb":14.4585},{"model_name":"gpt-4o-mini-2024-07-18","icon":"ri:openai-fill","correct_count":97,"total_count":164,"correct_pct":59.15,"prompt_cost_usd":0.0086,"completion_cost_usd":0.0156,"total_cost_usd":0.0242,"total_cost_thb":0.847},{"model_name":"command-a-03-2025","icon":null,"correct_count":89,"total_count":164,"correct_pct":54.27,"prompt_cost_usd":0.2297,"completion_cost_usd":0.6034,"total_cost_usd":0.8331,"total_cost_thb":29.1585},{"model_name":"phi-4","icon":"ri:microsoft-fill","correct_count":88,"total_count":164,"correct_pct":53.66,"prompt_cost_usd":0.0062,"completion_cost_usd":0.0122,"total_cost_usd":0.0184,"total_cost_thb":0.644},{"model_name":"gpt-4.1-nano-2025-04-14","icon":"ri:openai-fill","correct_count":84,"total_count":164,"correct_pct":51.22,"prompt_cost_usd":0.0057,"completion_cost_usd":0.0124,"total_cost_usd":0.0181,"total_cost_thb":0.6335}];
+
+  let priceScoreChartInstance = null; // Variable to hold the chart instance
+
+    // Table sorting functionality
+  let currentSortField = 'correct_pct';
+  let currentSortDirection = 'desc';
+  
+  function sortTable(field) {
+    const headers = document.querySelectorAll('th.sortable');
+    
+    // Update sort direction
+    if (field === currentSortField) {
+      // Toggle direction if clicking the same header
+      currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Default to descending for new column
+      currentSortField = field;
+      currentSortDirection = 'desc';
+    }
+    
+    // Update header styles and indicators
+    headers.forEach(header => {
+      const headerField = header.getAttribute('data-field');
+      const indicator = header.querySelector('.sort-indicator');
+      
+      if (headerField === field) {
+        header.classList.add('active');
+        header.setAttribute('data-sort', currentSortDirection);
+        indicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+      } else {
+        header.classList.remove('active');
+        header.setAttribute('data-sort', 'none');
+        indicator.textContent = '';
+      }
+    });
+    
+    // Sort the table rows
+    const tbody = document.querySelector('.model-table tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Sort based on the current field and direction
+    rows.sort((a, b) => {
+      let aValue, bValue;
+      
+      if (field === 'model_name') {
+        // Text comparison for model name
+        aValue = a.querySelector('.model-name').textContent;
+        bValue = b.querySelector('.model-name').textContent;
+        return currentSortDirection === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      } else if (field === 'icon') {
+        // Sort by icon name using the data-icon-name attribute
+        const aIcon = a.querySelector('td:first-child .icon-style');
+        const bIcon = b.querySelector('td:first-child .icon-style');
+        
+        // Get icon name from data-icon-name attribute
+        aValue = aIcon?.getAttribute('data-icon-name') || aIcon?.textContent || '';
+        bValue = bIcon?.getAttribute('data-icon-name') || bIcon?.textContent || '';
+        
+        return currentSortDirection === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      } else {
+        // Numeric comparison for other fields
+        const aCell = a.querySelectorAll('.numeric')[field === 'correct_pct' ? 0 : 1];
+        const bCell = b.querySelectorAll('.numeric')[field === 'correct_pct' ? 0 : 1];
+        
+        // Parse the numeric values (remove % and convert to number)
+        aValue = parseFloat(aCell.textContent.replace('%', ''));
+        bValue = parseFloat(bCell.textContent.replace('%', ''));
+        
+        return currentSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+    });
+    
+    // Reappend rows in the new order
+    rows.forEach(row => tbody.appendChild(row));
+  }
+  
+  // Add click event listeners to sortable headers
+  document.addEventListener('DOMContentLoaded', () => {
+    const sortableHeaders = document.querySelectorAll('th.sortable');
+    sortableHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const field = header.getAttribute('data-field');
+        if (field) {
+          sortTable(field);
+        }
+      });
+    });
+  });
+
+// Initialize chart when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Make sure Chart is defined globally
+    if (typeof Chart === 'undefined') {
+      console.error('Chart.js is not loaded. Please check your network connection or try refreshing the page.');
+      return;
+    }
+    const ctx = document.getElementById('priceScoreChart');
+    if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
+      console.error('Canvas element #priceScoreChart not found or not a canvas.');
+      return;
+    }
+
+    if (typeof ChartDataLabels === 'undefined') {
+      console.error('ChartDataLabels plugin not found. Please check your network connection or try refreshing the page.');
+      return;
+    }
+
+    // Initialize state for toggles
+    let showLabels = false; // Default to hiding labels
+    let logScale = true; // Default to logarithmic scale
+    
+    console.log('Chart.js ready, creating price vs score chart.');
+
+    if (typeof priceScoresData !== 'undefined' && Array.isArray(priceScoresData)) {
+      // Filter out data points with zero or negative cost for log scale compatibility
+      const validPriceScoresData = priceScoresData.filter(item => 
+        (item.total_cost_thb !== undefined && item.total_cost_thb > 0)
+      );
+
+      // Group models by icon
+      const modelsByIcon = {};
+      validPriceScoresData.forEach(model => {
+        if (!modelsByIcon[model.icon]) {
+          modelsByIcon[model.icon] = [];
+        }
+        modelsByIcon[model.icon].push(model);
+      });
+
+      // Define a set of distinct colors for different model families based on actual icon names
+      const iconColors = {
+        'ri:openai-fill': { backgroundColor: 'rgba(16, 163, 127, 0.8)', borderColor: 'rgba(16, 163, 127, 1)' },
+        'ri:claude-fill': { backgroundColor: 'rgba(255, 161, 91, 0.8)', borderColor: 'rgba(255, 161, 91, 1)' },
+        'ri:gemini-fill': { backgroundColor: 'rgba(234, 67, 53, 0.8)', borderColor: 'rgba(234, 67, 53, 1)' },
+        'ri:gemini-line': { backgroundColor: 'rgba(234, 67, 53, 0.8)', borderColor: 'rgba(234, 67, 53, 1)' },
+        'ri:meta-fill': { backgroundColor: 'rgba(24, 119, 242, 0.8)', borderColor: 'rgba(24, 119, 242, 1)' },
+        'ri:microsoft-fill': { backgroundColor: 'rgba(0, 120, 212, 0.8)', borderColor: 'rgba(0, 120, 212, 1)' },
+        'ri:twitter-x-line': { backgroundColor: 'rgba(29, 161, 242, 0.8)', borderColor: 'rgba(29, 161, 242, 1)' },
+        'ri:alibaba-cloud-fill': { backgroundColor: 'rgba(255, 106, 0, 0.8)', borderColor: 'rgba(255, 106, 0, 1)' },
+        'arcticons:deepseek': { backgroundColor: 'rgba(120, 86, 255, 0.8)', borderColor: 'rgba(120, 86, 255, 1)' },
+        'default': { backgroundColor: 'rgba(75, 192, 192, 0.8)', borderColor: 'rgba(75, 192, 192, 1)' }
+      };
+
+      // Calculate proper Pareto frontier
+      // We want points that are not dominated by any other point
+      // A point is dominated if there exists another point with higher score and lower cost
+      
+      // Convert data to simple points for processing
+      const allPoints = validPriceScoresData.map(model => ({
+        x: model.total_cost_thb,
+        y: model.correct_pct,
+        model: model.model_name
+      }));
+      
+      // Find non-dominated points (true Pareto frontier)
+      const paretoPoints = [];
+      
+      // For each point, check if it's dominated by any other point
+      for (const point of allPoints) {
+        let isDominated = false;
+        
+        for (const otherPoint of allPoints) {
+          // A point dominates another if it has higher score and lower/equal cost
+          // OR equal score and lower cost
+          if (
+            (otherPoint.y > point.y && otherPoint.x <= point.x) ||
+            (otherPoint.y === point.y && otherPoint.x < point.x)
+          ) {
+            isDominated = true;
+            break;
+          }
+        }
+        
+        if (!isDominated) {
+          paretoPoints.push(point);
+        }
+      }
+      
+      // Sort points by x (cost) ascending for the line
+      paretoPoints.sort((a, b) => a.x - b.x);
+      
+      // Function to get friendly model name from icon identifier
+      const getFriendlyModelName = (iconName) => {
+        // Extract the model name from the icon identifier
+        if (iconName === 'ri:gemini-line') {
+          return "Gemma";
+        } else if (iconName === 'ri:gemini-fill') {
+          return "Gemini";
+        } else if (iconName.includes('ri:')) {
+          // Format: ri:openai-fill -> OpenAI
+          const baseName = iconName.replace('ri:', '').split('-')[0];
+          return baseName.charAt(0).toUpperCase() + baseName.slice(1);
+        } else if (iconName.includes('arcticons:')) {
+          // Format: arcticons:deepseek -> Deepseek
+          const baseName = iconName.replace('arcticons:', '');
+          return baseName.charAt(0).toUpperCase() + baseName.slice(1);
+        } else {
+          // Default case
+          return "other";
+        }
+      };
+
+      // Create datasets for each icon group
+      const datasets = Object.keys(modelsByIcon).map(icon => {
+        const models = modelsByIcon[icon];
+        // Get the color for this icon, or use default if not found
+        const colorSet = iconColors[icon] || iconColors['default'];
+        // Get friendly model name for the legend
+        const friendlyName = getFriendlyModelName(icon);
+        
+        return {
+          label: friendlyName,
+          data: models.map(model => ({
+            x: model.total_cost_thb ,
+            y: model.correct_pct
+          })),
+          backgroundColor: colorSet.backgroundColor,
+          borderColor: colorSet.borderColor,
+          borderWidth: 2,
+          pointRadius: 10,
+          pointHoverRadius: 14,
+          pointStyle: 'circle',
+          pointBorderWidth: 2,
+          pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+          pointBackgroundColor: colorSet.backgroundColor,
+          hoverBorderWidth: 3,
+          hoverBorderColor: 'white',
+          labels: models.map(model => model.model_name)
+        };
+      });
+
+      // Register the datalabels plugin globally - init-chart.js might do this too
+      window.Chart.register(window.ChartDataLabels);
+
+      // Add Pareto frontier dataset
+      datasets.push({
+        label: 'pareto frontier',
+        data: paretoPoints,
+        type: 'line',
+        fill: false,
+        borderColor: 'rgba(255, 255, 255, 0.9)',
+        borderWidth: 2,
+        borderDash: [], // Solid line like in the screenshot
+        pointRadius: 6, // Show points for models on the Pareto frontier
+        pointBackgroundColor: 'rgba(255, 255, 255, 0.9)',
+        pointBorderColor: 'rgba(0, 0, 0, 0.8)',
+        pointBorderWidth: 2,
+        tension: 0, // Straight lines between points
+        order: 0, // Ensure this dataset is drawn on top
+        stepped: false, // Ensure smooth line between points
+        // Custom labels for tooltips
+        labels: paretoPoints.map(point => `Best value at ${point.y.toFixed(2)}% (${point.model})`)
+      });
+      
+      // Store the chart instance
+      priceScoreChartInstance = new window.Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: datasets
+        },
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'logarithmic', // Start with logarithmic scale
+              position: 'bottom',
+              title: {
+                display: true,
+                text: 'Completion Cost (฿ / 1M tokens)' // Clarified unit
+              }
+            },
+            y: {
+              beginAtZero: false, // Scores don't have to start at 0
+              // Calculate the minimum y value from all datasets
+              min: function() {
+                // Find minimum score across all data points
+                const allScores = [];
+                validPriceScoresData.forEach(model => {
+                  allScores.push(model.correct_pct);
+                });
+                
+                // Find the minimum score and round down to nearest 10
+                const minScore = Math.min(...allScores);
+                return Math.floor(minScore / 10) * 10;
+              }(),
+              max: 100, // Ensure y-axis ends at 100
+              title: {
+                display: true,
+                text: 'o-net score (%)'
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              backgroundColor: 'rgba(20, 25, 35, 0.9)',
+              titleFont: {
+                size: 14,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 13
+              },
+              padding: 12,
+              cornerRadius: 6,
+              displayColors: true,
+              boxWidth: 10,
+              boxHeight: 10,
+              boxPadding: 3,
+              callbacks: {
+                title: function(tooltipItems) {
+                  return tooltipItems[0].dataset.labels[tooltipItems[0].dataIndex];
+                },
+                label: function(context) {
+                  const label = context.dataset.label || '';
+                  const dataPoint = context.raw;
+                  
+                  // Special handling for Pareto frontier points
+                  if (label === 'Pareto Frontier') {
+                    return [
+                      `Score: ${dataPoint.y.toFixed(2)}%`,
+                      `Cost: ฿${dataPoint.x.toFixed(2)}`,
+                      `Best value point`
+                    ];
+                  }
+                  
+                  return [
+                    `Score: ${dataPoint.y.toFixed(2)}%`,
+                    `Cost: ฿${dataPoint.x.toFixed(2)}`
+                  ];
+                }
+              }
+            },
+            datalabels: {
+              color: 'white',
+              backgroundColor: function(context) {
+                // Special handling for Pareto frontier points
+                if (context.dataset.label === 'Pareto Frontier') {
+                  return 'rgba(0, 0, 0, 0.8)';
+                }
+                
+                // Get the color of the point and add some opacity
+                // Use a darker background for better contrast with white text
+                const bgColor = context.dataset.backgroundColor;
+                if (typeof bgColor === 'string') {
+                  return bgColor.replace(')', ', 0.85)').replace('rgb', 'rgba');
+                }
+                return 'rgba(0, 0, 0, 0.7)';
+              },
+              borderRadius: 4,
+              padding: {
+                top: 5,
+                right: 8,
+                bottom: 5,
+                left: 8
+              },
+              font: {
+                weight: 'bold',
+                size: 12,
+                family: 'Arial'
+              },
+              formatter: (value, context) => {
+                // Special handling for Pareto frontier points
+                if (context.dataset.label === 'pareto frontier') {
+                  // Get the actual model name for Pareto frontier points
+                  const point = context.dataset.data[context.dataIndex];
+                  const modelName = point.model || '';
+                  
+                  // Intelligently shorten the model name
+                  if (modelName.length <= 10) {
+                    return modelName;
+                  } else if (modelName === 'gemini-fill') {
+                    return 'Gemma';
+                  } else if (modelName.startsWith('gemini-')) {
+                    const isThinking = modelName.endsWith('preview-04-17') ? '(thinking)' : '';
+                    return 'Gemini ' + modelName.split('-')[1] + ' ' + modelName.split('-')[2] + ' ' + isThinking;
+                  } else if (modelName.startsWith('claude-')) {
+                    return 'Claude ' + modelName.split('-')[1];
+                  } else if (modelName.startsWith('gpt-')) {
+                    return modelName.replace('gpt-', 'GPT ');
+                  } else if (modelName.startsWith('grok')) {
+                    return 'Grok ' + modelName.split('-')[1] + ' ' + modelName.split('-')[2];
+                  }else {
+                    return modelName.split('-')[0];
+                  }
+                }
+                
+                // Get the label for this data point
+                const label = context.dataset.labels[context.dataIndex];
+                if (!label) return '';
+                
+                // Intelligently shorten the model name to prevent overlapping
+                if (label.length <= 10) {
+                  return label; // Short names can be shown as is
+                }
+                
+                // For longer names, use intelligent shortening based on common patterns
+                if (label === 'gemini-fill') {
+                  return 'Gemma';
+                } else if (label.startsWith('gemini-')) {
+                  return 'Gemini ' + label.split('-')[1];
+                } else if (label.startsWith('claude-')) {
+                  return 'Claude ' + label.split('-')[1];
+                } else if (label.startsWith('gpt-')) {
+                  return label.replace('gpt-', 'GPT ');
+                } else {
+                  // For other models, just take the first part before any dash
+                  return label.split('-')[0];
+                }
+              },
+              anchor: 'end',
+              align: 'top',
+              offset: 8,
+              display: function(context) {
+                // Special handling for Pareto frontier points
+                if (context.dataset.label === 'pareto frontier') {
+                  // Always show labels for all Pareto frontier points
+                  return true;
+                }
+                
+                // For non-Pareto frontier points, only show if the toggle is on
+                if (!showLabels) {
+                  return false;
+                }
+                
+                // Only show labels for a subset of points to reduce clutter
+                // For better readability, we'll be more selective about which labels to show
+                const datasetIndex = context.datasetIndex;
+                const dataIndex = context.dataIndex;
+                const dataset = context.chart.data.datasets[datasetIndex];
+                const dataLength = dataset.data.length;
+                
+                // For very small datasets, show all labels
+                if (dataLength <= 3) {
+                  return true;
+                }
+                // For small datasets, show every other label
+                else if (dataLength <= 8) {
+                  return dataIndex % 2 === 0;
+                }
+                // For medium datasets, show every third label
+                else if (dataLength <= 15) {
+                  return dataIndex % 3 === 0;
+                }
+                // For large datasets, show only a few strategic labels
+                else {
+                  // Show first, last, and a few in between
+                  return dataIndex === 0 || dataIndex === dataLength - 1 || dataIndex % 4 === 0;
+                }
+              },
+              textStrokeColor: 'rgba(0, 0, 0, 0.9)',
+              textStrokeWidth: 3,
+              rotation: 0
+            }
+          }
+        }
+      });
+
+      // Add event listener for the log scale toggle
+      const logScaleToggle = document.getElementById('logScaleToggle');
+      if (logScaleToggle && priceScoreChartInstance) {
+        logScaleToggle.addEventListener('change', (event) => {
+          const isChecked = event.target instanceof HTMLInputElement ? event.target.checked : false;
+          logScale = isChecked;
+          priceScoreChartInstance.options.scales.x.type = logScale ? 'logarithmic' : 'linear';
+          
+          // Logarithmic scale cannot handle 0 or negative values.
+          // We already filtered the data initially.
+          // If the user toggles back to linear, the original (filtered) data is still appropriate.
+          
+          priceScoreChartInstance.update();
+        });
+      }
+      
+      // Add event listener for the show/hide labels toggle
+      const showLabelsToggle = document.getElementById('showLabelsToggle');
+      if (showLabelsToggle && priceScoreChartInstance) {
+        showLabelsToggle.addEventListener('change', (event) => {
+          const isChecked = event.target instanceof HTMLInputElement ? event.target.checked : false;
+          showLabels = isChecked;
+                    // Update the datalabels plugin configuration
+          priceScoreChartInstance.options.plugins.datalabels.display = function(context) {
+            // Always show labels for Pareto frontier points, regardless of toggle state
+            if (context.dataset.label === 'pareto frontier') {
+              return true;
+            }
+            
+            // For non-Pareto frontier points, only show if the toggle is on
+            if (!showLabels) {
+              return false;
+            }
+            
+            // Only show labels for a subset of points to reduce clutter
+            // For better readability, we'll be more selective about which labels to show
+            const datasetIndex = context.datasetIndex;
+            const dataIndex = context.dataIndex;
+            const dataset = context.chart.data.datasets[datasetIndex];
+            const dataLength = dataset.data.length;
+            
+            // For very small datasets, show all labels
+            if (dataLength <= 3) {
+              return true;
+            }
+            // For small datasets, show every other label
+            else if (dataLength <= 8) {
+              return dataIndex % 2 === 0;
+            }
+            // For medium datasets, show every third label
+            else if (dataLength <= 15) {
+              return dataIndex % 3 === 0;
+            }
+            // For large datasets, show only a few strategic labels
+            else {
+              // Show first, last, and a few in between
+              return dataIndex === 0 || dataIndex === dataLength - 1 || dataIndex % 4 === 0;
+            }
+          };
+          
+          priceScoreChartInstance.update();
+        });
+      }
+      
+      // Add a legend to explain the colors
+      priceScoreChartInstance.options.plugins.legend = {
+        display: true,
+        position: 'top',
+        align: 'center',
+        labels: {
+          color: 'rgba(255, 255, 255, 0.9)',
+          font: {
+            size: 13,
+            weight: 'bold'
+          },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 10,
+          boxHeight: 10,
+          // Sort the legend items alphabetically for better readability
+          sort: (a, b) => (a.text > b.text) ? 1 : -1
+        },
+        title: {
+          display: true,
+          text: 'Model Families',
+          color: 'rgba(255, 255, 255, 0.9)',
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
+        }
+      };
+
+    } else {
+      console.error('priceScoresData is not available or not an array.');
+    }
+  });
+})();</script>  <!-- <ModelPricesSection />
+		<TimeCorrectnessSection /> --> </main>   </body></html>
