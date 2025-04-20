@@ -1,0 +1,217 @@
+---
+import * as duckdb from 'duckdb';
+
+// Define the structure of the model data within the component
+interface ModelInfo {
+	model_name: string;
+	input_token_price: number | null;
+	output_token_price: number | null;
+	icon: string;
+}
+
+let models: ModelInfo[] = [];
+let db: duckdb.Database | null = null;
+let con: duckdb.Connection | null = null;
+let dbError: string | null = null;
+
+// Database logic moved here
+try {
+	// Connect to the database
+	db = new duckdb.Database('/Users/vehasuwat/Project/llm-thai-o-net-graph/external/snapshot.duckdb', duckdb.OPEN_READONLY);
+	con = db.connect();
+
+	try {
+		// Prepare the SQL statement
+		const stmt = con.prepare('SELECT model_name, input_token_price, output_token_price, icon FROM snapshot.model_price_icon ORDER BY model_name');
+		
+		// Execute using callback wrapped in a Promise
+		const queryResult = await new Promise((resolve, reject) => {
+			stmt.all((err, res) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(res);
+				}
+			});
+		});
+
+		// Finalize the statement (important!)
+		await stmt.finalize();
+		
+		if (Array.isArray(queryResult)) {
+            models = queryResult as unknown as ModelInfo[];
+        } else {
+            console.error('Query result is not an array:', queryResult);
+            dbError = 'Data received from database is not in the expected format (array).';
+            models = [];
+        }
+
+	} finally {
+		if (con) {
+			await con.close();
+		}
+	}
+
+} catch (e) {
+	console.error("Database operation error:", e);
+	dbError = (e instanceof Error) ? e.message : String(e);
+	models = [];
+} finally {
+	if (db) {
+		db.close((err) => {
+            if (err) {
+                console.error("Error closing database:", err);
+                 if (!dbError) { 
+                     dbError = 'Failed to close database connection cleanly.';
+                 }
+            }
+        });
+	}
+}
+
+---
+
+<section id="model-prices">
+	<h1>LLM Model Prices <span class="text-gradient">(from DuckDB)</span></h1>
+	{dbError && (
+		<p class="error">Database Error: {dbError}</p>
+	)}
+
+	{!dbError && models && models.length > 0 && (
+		<div class="chart-container" style="position: relative; height:60vh; width:80vw; margin-top: 2rem;">
+			<canvas id="modelPriceChart"></canvas> { /* Chart script in index.astro will find this */ }
+		</div>
+	)}
+
+	{!dbError && models && models.length > 0 ? (
+		<table class="model-table">
+			<thead>
+				<tr>
+					<th>Icon</th>
+					<th>Model Name</th>
+					<th>Input Price ($/token)</th>
+					<th>Output Price ($/token)</th>
+				</tr>
+			</thead>
+			<tbody>
+				{models.map(model => (
+					<tr>
+						<td>{model.icon}</td>
+						<td>{model.model_name}</td>
+						<td>{model.input_token_price != null ? `$${model.input_token_price.toFixed(6)}` : 'N/A'}</td>
+						<td>{model.output_token_price != null ? `$${model.output_token_price.toFixed(6)}` : 'N/A'}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	) : (
+		!dbError && <p>No models found.</p>
+	)}
+</section>
+
+<!-- Chart Script moved here -->
+<script type="module" src="/src/scripts/init-chart.js"></script>
+<script define:vars={{ modelsData: models }}>
+	document.addEventListener('chartjs-ready', () => {
+		// Check if the chart canvas exists before trying to create chart
+		const ctx = document.getElementById('modelPriceChart');
+		if (!ctx) {
+			// console.log('Chart canvas not found on this page view.');
+			return; // Exit if the chart canvas isn't rendered
+		}
+
+		console.log('Chart.js ready event received, attempting to create chart in component.');
+		
+		if (typeof window.Chart === 'undefined') {
+			console.error('Chart object not found on window. Did init-chart.js load correctly?');
+			return;
+		}
+
+		if (typeof modelsData !== 'undefined' && Array.isArray(modelsData)) {
+			if (ctx instanceof HTMLCanvasElement) {
+				const labels = modelsData.map(m => m.model_name);
+				const inputPrices = modelsData.map(m => m.input_token_price ?? 0); 
+				const outputPrices = modelsData.map(m => m.output_token_price ?? 0);
+
+				new window.Chart(ctx, {
+					type: 'bar',
+					data: {
+						labels: labels,
+						datasets: [
+							{
+								label: 'Input Price ($/token)',
+								data: inputPrices,
+								backgroundColor: 'rgba(54, 162, 235, 0.6)',
+								borderColor: 'rgba(54, 162, 235, 1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Output Price ($/token)',
+								data: outputPrices,
+								backgroundColor: 'rgba(255, 99, 132, 0.6)',
+								borderColor: 'rgba(255, 99, 132, 1)',
+								borderWidth: 1
+							}
+						]
+					},
+					options: {
+						maintainAspectRatio: false,
+						scales: {
+							y: {
+								beganAtZero: true,
+								title: {
+									display: true,
+									text: 'Price per Token ($)'
+								}
+							},
+							x: {
+								title: {
+									display: true,
+									text: 'Model Name'
+								}
+							}
+						}
+					}
+				});
+			} else {
+				console.error('Canvas element #modelPriceChart not found or not a canvas.');
+			}
+		} else {
+			console.error('modelsData is not available or not an array for charting.');
+		}
+	});
+</script>
+
+<style>
+	/* Styles specifically for this section can move here */
+	/* For now, they remain global in index.astro */
+	.text-gradient {
+		background-image: var(--accent-gradient);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-size: 400%;
+		background-position: 0%;
+	}
+	.model-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 2rem;
+	}
+	.model-table th, .model-table td {
+		border: 1px solid rgba(var(--accent-light), 25%);
+		padding: 0.5rem 1rem;
+		text-align: left;
+	}
+	.model-table th {
+		background-color: rgba(var(--accent-dark), 66%);
+	}
+	.error {
+		color: red;
+		background-color: rgba(255, 0, 0, 0.1);
+		border: 1px solid red;
+		padding: 1rem;
+		border-radius: 8px;
+		margin-bottom: 1rem;
+	}
+	/* Keep h1 style global or duplicate if needed */
+</style>

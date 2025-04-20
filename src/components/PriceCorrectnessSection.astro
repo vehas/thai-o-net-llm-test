@@ -1,0 +1,656 @@
+---
+import * as duckdb from 'duckdb';
+import type { Database } from 'duckdb';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import Icon from './Icon.astro';
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Define the structure for price vs score data based on the joining query
+interface PriceScoreInfo {
+  icon: string;
+  model_name: string;
+  correct_pct: number; // Renamed from correct_percentage
+  total_cost_usd: number; // Renamed from total_cost
+  correct_count: number;
+  total_count: number;
+  prompt_cost_usd: number; // Renamed from prompt_cost
+  completion_cost_usd: number; // Renamed from completion_cost
+}
+
+let db: Database | null = null;
+let priceScores: PriceScoreInfo[] = [];
+let dbError: string | null = null;
+
+const dbPath = path.resolve(path.dirname(__filename), '../../external/snapshot.duckdb');
+let con: duckdb.Connection | null = null; // Need connection for prepare/finalize
+
+try {
+  db = new duckdb.Database(dbPath, { access_mode: 'READ_ONLY' });
+  con = db.connect(); // Connect to the database
+
+  // Restore the correct query joining tables
+  const query = `
+      SELECT
+        metrics.model_name,
+        metrics.icon,
+        metrics.correct_count,
+        metrics.total_count,
+        metrics.correct_pct,
+        ROUND(metrics.total_prompt_tokens * metrics.input_token_price / 1000.0, 4) AS prompt_cost_usd,
+        ROUND(metrics.total_completion_tokens * metrics.output_token_price / 1000.0, 4) AS completion_cost_usd,
+        ROUND(
+          (metrics.total_prompt_tokens * metrics.input_token_price
+         + metrics.total_completion_tokens * metrics.output_token_price)
+          / 1000.0
+        , 4) AS total_cost_usd
+      FROM (
+        SELECT
+          a.model_name,
+          m.icon,
+          m.input_token_price,
+          m.output_token_price,
+          SUM(CASE WHEN a.correct_answer_key = q.answer THEN 1 ELSE 0 END) AS correct_count,
+          COUNT(*) AS total_count,
+          ROUND(
+            100.0
+            * SUM(CASE WHEN a.correct_answer_key = q.answer THEN 1 ELSE 0 END)
+            / COUNT(*)
+          , 2) AS correct_pct,
+          SUM(a.prompt_tokens) AS total_prompt_tokens,
+          SUM(a.completion_tokens) AS total_completion_tokens
+        FROM answer_snapshot a
+        JOIN question q
+          ON a.exam_name   = q.exam_name
+         AND a.subject     = q.subject
+         AND a.test_number = q.subject_index
+        JOIN model_price_icon m
+          ON a.model_name  = m.model_name
+        GROUP BY
+          a.model_name,
+          m.icon,
+          m.input_token_price,
+          m.output_token_price
+      ) metrics
+      ORDER BY
+        metrics.correct_pct DESC;
+  `;
+
+  const stmt = con.prepare(query);
+
+  priceScores = await new Promise<PriceScoreInfo[]>((resolve, reject) => {
+    stmt.all((err, res) => {
+      if (err) {
+        reject(err);
+      } else {
+        // Map BigInts to Numbers if necessary, ensure result matches interface
+        resolve((res as any[]).map(row => ({
+            ...row,
+            correct_count: Number(row.correct_count),
+            total_count: Number(row.total_count),
+            // Ensure numeric types for costs as well, handle potential nulls/undefined
+            total_cost_usd: Number(row.total_cost_usd ?? 0),
+            prompt_cost_usd: Number(row.prompt_cost_usd ?? 0),
+            completion_cost_usd: Number(row.completion_cost_usd ?? 0),
+        })) as PriceScoreInfo[]);
+      }
+    });
+  });
+
+  await stmt.finalize(); // Finalize the statement
+
+} catch (e) {
+  console.error("Database operation error:", e);
+  dbError = (e instanceof Error) ? e.message : String(e);
+  priceScores = [];
+} finally {
+  // Close connection first, then database
+  if (con) {
+    try {
+      await con.close();
+    } catch (closeErr) {
+      console.error("Error closing connection:", closeErr);
+      if (!dbError) dbError = 'Failed to close database connection.';
+    }
+  }
+  if (db) {
+    db.close((err) => {
+      if (err) {
+        console.error("Error closing database:", err);
+        if (!dbError) { 
+          dbError = 'Failed to close database instance cleanly.';
+        }
+      }
+    });
+  }
+}
+
+---
+
+<section id="price-correctness">
+  <h1>Price vs Score</h1>
+  {dbError && (
+    <div class="error-container">
+      <p class="error">Database Error: {dbError}</p>
+    </div>
+  )}
+  {!dbError && priceScores && priceScores.length > 0 && (
+    <div class="content-container">
+      <div class="chart-section">
+        <div class="chart-controls">
+          <label class="toggle-container">
+            <input type="checkbox" id="logScaleToggle" />
+            <span class="toggle-label">Use Logarithmic Scale for Price (X-axis)</span>
+          </label>
+        </div>
+        <div class="chart-container">
+          <canvas id="priceScoreChart"></canvas>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <h2>Model Performance Data</h2>
+        <div class="table-wrapper">
+          <table class="model-table">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Model Name</th>
+                <th>Correct (%)</th>
+                <th>Total Cost ($)</th>
+                <th>Correct/Total</th>
+                <th>Prompt Cost ($)</th>
+                <th>Completion Cost ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {priceScores.map((row) => (
+                <tr>
+                  <td><Icon name={row.icon} /></td>
+                  <td class="model-name">{row.model_name}</td>
+                  <td class="numeric">{row.correct_pct?.toFixed(2)}%</td>
+                  <td class="numeric">${row.total_cost_usd?.toFixed(4)}</td>
+                  <td class="numeric">{row.correct_count}/{row.total_count}</td>
+                  <td class="numeric">${row.prompt_cost_usd?.toFixed(4)}</td>
+                  <td class="numeric">${row.completion_cost_usd?.toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )}
+  {!dbError && (!priceScores || priceScores.length === 0) && (
+    <div class="empty-state">
+      <p>No price score data available.</p>
+    </div>
+  )}
+</section>
+
+<script type="module" src="/src/scripts/init-chart.js"></script>
+<script define:vars={{ priceScoresData: priceScores }}>
+  let priceScoreChartInstance = null; // Variable to hold the chart instance
+
+  document.addEventListener('chartjs-ready', () => {
+    const ctx = document.getElementById('priceScoreChart');
+    if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
+      console.error('Canvas element #priceScoreChart not found or not a canvas.');
+      return;
+    }
+
+    if (typeof window.Chart === 'undefined' || typeof window.ChartDataLabels === 'undefined') {
+      console.error('Chart.js or ChartDataLabels plugin not found. Ensure init-chart.js loads them and run: bun install chartjs-plugin-datalabels');
+      return;
+    }
+
+    console.log('Chart.js ready, creating price vs score chart.');
+
+    if (typeof priceScoresData !== 'undefined' && Array.isArray(priceScoresData)) {
+      // Filter out data points with zero or negative cost for log scale compatibility
+      const validPriceScoresData = priceScoresData.filter(item => 
+        (item.total_cost_usd !== undefined && item.total_cost_usd > 0)
+      );
+
+      // Group models by icon
+      const modelsByIcon = {};
+      validPriceScoresData.forEach(model => {
+        if (!modelsByIcon[model.icon]) {
+          modelsByIcon[model.icon] = [];
+        }
+        modelsByIcon[model.icon].push(model);
+      });
+
+      // Define a set of distinct colors for different model families based on actual icon names
+      const iconColors = {
+        'ri:openai-fill': { backgroundColor: 'rgba(16, 163, 127, 0.8)', borderColor: 'rgba(16, 163, 127, 1)' },
+        'ri:claude-fill': { backgroundColor: 'rgba(255, 161, 91, 0.8)', borderColor: 'rgba(255, 161, 91, 1)' },
+        'ri:gemini-fill': { backgroundColor: 'rgba(234, 67, 53, 0.8)', borderColor: 'rgba(234, 67, 53, 1)' },
+        'ri:gemini-line': { backgroundColor: 'rgba(234, 67, 53, 0.8)', borderColor: 'rgba(234, 67, 53, 1)' },
+        'ri:meta-fill': { backgroundColor: 'rgba(24, 119, 242, 0.8)', borderColor: 'rgba(24, 119, 242, 1)' },
+        'ri:microsoft-fill': { backgroundColor: 'rgba(0, 120, 212, 0.8)', borderColor: 'rgba(0, 120, 212, 1)' },
+        'ri:twitter-x-line': { backgroundColor: 'rgba(29, 161, 242, 0.8)', borderColor: 'rgba(29, 161, 242, 1)' },
+        'ri:alibaba-cloud-fill': { backgroundColor: 'rgba(255, 106, 0, 0.8)', borderColor: 'rgba(255, 106, 0, 1)' },
+        'arcticons:deepseek': { backgroundColor: 'rgba(120, 86, 255, 0.8)', borderColor: 'rgba(120, 86, 255, 1)' },
+        'default': { backgroundColor: 'rgba(75, 192, 192, 0.8)', borderColor: 'rgba(75, 192, 192, 1)' }
+      };
+
+      // Create datasets for each icon group
+      const datasets = Object.keys(modelsByIcon).map(icon => {
+        const models = modelsByIcon[icon];
+        
+        return {
+          label: icon,
+          data: models.map(model => ({
+            x: model.total_cost_usd,
+            y: model.correct_pct
+          })),
+          backgroundColor: color.backgroundColor,
+          borderColor: color.borderColor,
+          borderWidth: 2,
+          pointRadius: 10,
+          pointHoverRadius: 14,
+          pointStyle: 'circle',
+          pointBorderWidth: 2,
+          pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+          pointBackgroundColor: color.backgroundColor,
+          hoverBorderWidth: 3,
+          hoverBorderColor: 'white',
+          labels: models.map(model => model.model_name)
+        };
+      });
+
+      // Register the datalabels plugin globally - init-chart.js might do this too
+      window.Chart.register(window.ChartDataLabels);
+
+      // Store the chart instance
+      priceScoreChartInstance = new window.Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: datasets
+        },
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear', // Start with linear scale
+              position: 'bottom',
+              title: {
+                display: true,
+                text: 'Completion Cost ($ / 1000 tokens)' // Clarified unit
+              }
+            },
+            y: {
+              beginAtZero: false, // Scores don't have to start at 0
+              min: 0, // Ensure y-axis starts at 0
+              max: 100, // Ensure y-axis ends at 100
+              title: {
+                display: true,
+                text: 'o-net score (%)'
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              backgroundColor: 'rgba(20, 25, 35, 0.9)',
+              titleFont: {
+                size: 14,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 13
+              },
+              padding: 12,
+              cornerRadius: 6,
+              displayColors: true,
+              boxWidth: 10,
+              boxHeight: 10,
+              boxPadding: 3,
+              callbacks: {
+                title: function(tooltipItems) {
+                  return tooltipItems[0].dataset.labels[tooltipItems[0].dataIndex];
+                },
+                label: function(context) {
+                  const label = context.dataset.label || '';
+                  const dataPoint = context.raw;
+                  return [
+                    `Score: ${dataPoint.y.toFixed(2)}%`,
+                    `Cost: $${dataPoint.x.toFixed(4)}`
+                  ];
+                }
+              }
+            },
+            datalabels: {
+              color: 'white',
+              backgroundColor: function(context) {
+                // Get the color of the point and add some opacity
+                // Use a darker background for better contrast with white text
+                const bgColor = context.dataset.backgroundColor;
+                if (typeof bgColor === 'string') {
+                  return bgColor.replace(')', ', 0.85)').replace('rgb', 'rgba');
+                }
+                return 'rgba(0, 0, 0, 0.7)';
+              },
+              borderRadius: 4,
+              padding: {
+                top: 5,
+                right: 8,
+                bottom: 5,
+                left: 8
+              },
+              font: {
+                weight: 'bold',
+                size: 12,
+                family: 'Arial'
+              },
+              formatter: (value, context) => {
+                // Get the label for this data point
+                const label = context.dataset.labels[context.dataIndex];
+                if (!label) return '';
+                
+                // Intelligently shorten the model name to prevent overlapping
+                if (label.length <= 10) {
+                  return label; // Short names can be shown as is
+                }
+                
+                // For longer names, use intelligent shortening based on common patterns
+                if (label.startsWith('gemini-')) {
+                  return 'Gemini ' + label.split('-')[1];
+                } else if (label.startsWith('claude-')) {
+                  return 'Claude ' + label.split('-')[1];
+                } else if (label.startsWith('gpt-')) {
+                  return label.replace('gpt-', 'GPT ');
+                } else {
+                  // For other models, just take the first part before any dash
+                  return label.split('-')[0];
+                }
+              },
+              anchor: 'end',
+              align: 'top',
+              offset: 8,
+              display: function(context) {
+                // Only show labels for a subset of points to reduce clutter
+                // For better readability, we'll be more selective about which labels to show
+                const datasetIndex = context.datasetIndex;
+                const dataIndex = context.dataIndex;
+                const dataset = context.chart.data.datasets[datasetIndex];
+                const dataLength = dataset.data.length;
+                
+                // For very small datasets, show all labels
+                if (dataLength <= 3) {
+                  return true;
+                }
+                // For small datasets, show every other label
+                else if (dataLength <= 8) {
+                  return dataIndex % 2 === 0;
+                }
+                // For medium datasets, show every third label
+                else if (dataLength <= 15) {
+                  return dataIndex % 3 === 0;
+                }
+                // For large datasets, show only a few strategic labels
+                else {
+                  // Show first, last, and a few in between
+                  return dataIndex === 0 || dataIndex === dataLength - 1 || dataIndex % 4 === 0;
+                }
+              },
+              textStrokeColor: 'rgba(0, 0, 0, 0.9)',
+              textStrokeWidth: 3,
+              rotation: 0
+            }
+          }
+        }
+      });
+
+      // Add event listener for the toggle
+      const logScaleToggle = document.getElementById('logScaleToggle');
+      if (logScaleToggle && priceScoreChartInstance) {
+        logScaleToggle.addEventListener('change', (event) => {
+          const isChecked = event.target instanceof HTMLInputElement ? event.target.checked : false;
+          priceScoreChartInstance.options.scales.x.type = isChecked ? 'logarithmic' : 'linear';
+          
+          // Logarithmic scale cannot handle 0 or negative values.
+          // We already filtered the data initially.
+          // If the user toggles back to linear, the original (filtered) data is still appropriate.
+          
+          priceScoreChartInstance.update();
+        });
+      }
+      
+      // Add a legend to explain the colors
+      priceScoreChartInstance.options.plugins.legend = {
+        display: true,
+        position: 'top',
+        align: 'center',
+        labels: {
+          color: 'rgba(255, 255, 255, 0.9)',
+          font: {
+            size: 13,
+            weight: 'bold'
+          },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 10,
+          boxHeight: 10
+        },
+        title: {
+          display: true,
+          text: 'Model Families',
+          color: 'rgba(255, 255, 255, 0.9)',
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
+        }
+      };
+
+    } else {
+      console.error('priceScoresData is not available or not an array.');
+    }
+  });
+</script>
+
+<style>
+/* Container styles */
+.content-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  width: 100%;
+}
+
+/* Chart section styles */
+.chart-section {
+  background-color: rgba(30, 35, 45, 0.7);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.chart-container {
+  position: relative;
+  height: 550px; /* Further increased height for better spacing between points */
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: rgba(20, 25, 35, 0.7);
+  padding: 1.5rem;
+}
+
+#priceScoreChart {
+  display: block; 
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+}
+
+.chart-controls {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(40, 45, 55, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 3.5em;
+  height: 1.5em;
+  background: rgba(50, 55, 65, 0.9);
+  border-radius: 1em;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="checkbox"]:checked {
+  background: rgba(75, 192, 192, 0.7);
+}
+
+input[type="checkbox"]:after {
+  content: "";
+  position: absolute;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 0.25em rgba(0, 0, 0, 0.3);
+  transform: scale(0.8);
+  left: 0.15em;
+  top: 0.15em;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="checkbox"]:checked:after {
+  left: calc(100% - 1.4em);
+}
+
+/* Table section styles */
+.table-container {
+  background-color: rgba(30, 35, 45, 0.7);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.table-container h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  font-weight: 600;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.model-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: rgba(40, 45, 55, 0.7);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.model-table th {
+  background-color: rgba(60, 65, 75, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.model-table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgba(80, 85, 95, 0.5);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.model-table tr:last-child td {
+  border-bottom: none;
+}
+
+.model-table tr:hover {
+  background-color: rgba(75, 192, 192, 0.15);
+}
+
+.model-name {
+  font-weight: 500;
+}
+
+.numeric {
+  text-align: right;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.icon-style {
+  display: inline-block;
+}
+
+/* Error and empty state styles */
+.error-container {
+  background-color: rgba(220, 53, 69, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid rgba(220, 53, 69, 0.8);
+}
+
+.error {
+  color: rgba(255, 100, 100, 1);
+  font-weight: 500;
+  margin: 0;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background-color: rgba(30, 35, 45, 0.7);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 400px;
+  }
+  
+  .model-table th,
+  .model-table td {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .table-container h2 {
+    font-size: 1.5rem;
+  }
+}
+</style>
