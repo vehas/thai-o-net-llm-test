@@ -83,3 +83,7 @@ bun run build
 ## Data Sources
 
 The data comes from the [LLM Performance on Thai O-NET Tests](https://ai-vs-thai-exams.pages.dev/onet_m6) project, which evaluates various language models on Thai educational assessments.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
