@@ -196,7 +196,16 @@ if (import.meta.env.SSR) {
   )}
 </section>
 
-<script type="module" src="{import.meta.env.BASE_URL}/src/scripts/init-chart.js"></script>
+<!-- Use CDN links for Chart.js and plugins to ensure they work in static builds -->
+<script is:inline src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<script is:inline src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script is:inline>
+  // Register the datalabels plugin when both libraries are loaded
+  if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+    console.log('Chart.js and DataLabels plugin initialized and registered.');
+  }
+</script>
 <script define:vars={{ priceScoresData: priceScores }}>
   let priceScoreChartInstance = null; // Variable to hold the chart instance
 
@@ -290,15 +299,21 @@ if (import.meta.env.SSR) {
     });
   });
 
-document.addEventListener('chartjs-ready', () => {
+// Initialize chart when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Make sure Chart is defined globally
+    if (typeof Chart === 'undefined') {
+      console.error('Chart.js is not loaded. Please check your network connection or try refreshing the page.');
+      return;
+    }
     const ctx = document.getElementById('priceScoreChart');
     if (!ctx || !(ctx instanceof HTMLCanvasElement)) {
       console.error('Canvas element #priceScoreChart not found or not a canvas.');
       return;
     }
 
-    if (!window.Chart || !window.ChartDataLabels) {
-      console.error('Chart.js or ChartDataLabels plugin not found. Ensure init-chart.js loads them and run: bun install chartjs-plugin-datalabels');
+    if (typeof ChartDataLabels === 'undefined') {
+      console.error('ChartDataLabels plugin not found. Please check your network connection or try refreshing the page.');
       return;
     }
 

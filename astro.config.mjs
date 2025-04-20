@@ -11,7 +11,8 @@ export default defineConfig({
   ],
   output: 'static',
   build: {
-    inlineStylesheets: 'auto'
+    inlineStylesheets: 'always',
+    assets: 'inline'
   },
   site: 'https://vehas.github.io',
   base: '/thai-o-net-llm-test',

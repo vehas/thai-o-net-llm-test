@@ -1,16 +1,58 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import FloatingMenu from '../components/FloatingMenu.astro';
+// Import section components
+import PriceCorrectnessSection from '../components/PriceCorrectnessSection.astro';
+import ModelPricesSection from '../components/ModelPricesSection.astro';
+import TimeCorrectnessSection from '../components/TimeCorrectnessSection.astro';
 
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="LLM Analysis">
+	<!-- <FloatingMenu /> -->
+	<main>
+		{/* Use the section components */}
+		<PriceCorrectnessSection />
+		<!-- <ModelPricesSection />
+		<TimeCorrectnessSection /> -->
+	</main>
+
+	<style>
+		/* Enable smooth scrolling */
+		html {
+			scroll-behavior: smooth;
+		}
+
+		main {
+			margin: auto;
+			padding: 1rem;
+			/* Adjust top padding for the fixed menu */
+			padding-top: 6rem; 
+			width: 90%;
+			max-width: 1200px;
+			color: white;
+			font-size: 20px;
+			line-height: 1.6;
+		}
+
+		section {
+			min-height: 80vh; /* Give sections some height */
+			padding-top: 4rem; /* Add space below the menu */
+			margin-bottom: 4rem; /* Space between sections */
+			border-bottom: 1px solid rgba(var(--accent-light), 10%); /* Separator */
+		}
+		section:last-of-type {
+			border-bottom: none;
+			margin-bottom: 0;
+		}
+
+		h1 {
+			font-size: 3rem; /* Global H1 style */
+			font-weight: 700;
+			line-height: 1;
+			text-align: center;
+			margin-bottom: 1em;
+		}
+		/* Keep other global styles needed by sections if not moved */
+	</style>
+</Layout>
