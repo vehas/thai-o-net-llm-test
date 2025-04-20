@@ -1,5 +1,7 @@
 # Price vs Score on LLM Thai O-NET Graph
 
+click to interact with [Main web page](https://vehas.github.io/thai-o-net-llm-test/)
+
 ![LLM Thai O-NET Graph](/screen_shot_page.png)
 
 A data visualization web application that compares LLM (Large Language Model) performance on Thai O-NET exams against their cost. This project analyzes how different AI models perform on Thai educational assessments and visualizes the price-performance relationship.
